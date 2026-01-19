@@ -28,14 +28,19 @@ namespace API_SSO.Controllers
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Login([FromBody] CredencialesUsuarioDTO credenciales)
         {
             // Buscar usuario
-            var user = await _UserManager.FindByNameAsync(credenciales.Email);
+            var user = await _UserManager.FindByEmailAsync(credenciales.Email);
             if (user == null)
             {
-                return new RespuestaAutenticacionDTO
+                //Si no coincide con el email buscará por el nombre de usuario
+                user = await _UserManager.FindByNameAsync(credenciales.Email);
+                if(user == null)
                 {
-                    FechaExpiracion = DateTime.Today,
-                    Token = "El usuario ingresado es incorrecto."
-                };
+                    return new RespuestaAutenticacionDTO
+                    {
+                        FechaExpiracion = DateTime.Today,
+                        Token = "El usuario ingresado es incorrecto."
+                    };
+                }
             }
 
             // Validar contraseña SIN emitir cookie
@@ -60,7 +65,11 @@ namespace API_SSO.Controllers
 
         private async Task<RespuestaAutenticacionDTO> ConstruirToken(CredencialesUsuarioDTO credenciales)
         {
-            var user = await _UserManager.FindByNameAsync(credenciales.Email);
+            var user = await _UserManager.FindByEmailAsync(credenciales.Email);
+            if(user == null)
+            {
+                user = await _UserManager.FindByNameAsync(credenciales.Email);
+            }
             var zvClaims = new List<Claim>()
             {
                 new Claim("username", user!.UserName!),
