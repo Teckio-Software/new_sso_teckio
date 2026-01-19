@@ -1,0 +1,24 @@
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\bin\Debug\net10.0\ClassLibrary1.deps.json
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\bin\Debug\net10.0\ClassLibrary1.dll
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\bin\Debug\net10.0\ClassLibrary1.pdb
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.AssemblyInfoInputs.cache
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.AssemblyInfo.cs
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.csproj.CoreCompileInputs.cache
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.sourcelink.json
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.dll
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\refint\ClassLibrary1.dll
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.pdb
+C:\Users\javvi\Downloads\GitHub\API_SSO\ClassLibrary1\obj\Debug\net10.0\ref\ClassLibrary1.dll
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\bin\Debug\net10.0\ClassLibrary1.deps.json
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\bin\Debug\net10.0\ClassLibrary1.dll
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\bin\Debug\net10.0\ClassLibrary1.pdb
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.AssemblyInfoInputs.cache
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.AssemblyInfo.cs
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.csproj.CoreCompileInputs.cache
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.sourcelink.json
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.dll
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\refint\ClassLibrary1.dll
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ClassLibrary1.pdb
+C:\Users\Angel gamma\Documents\GitHub\API_SSO\API_SSO\ClassLibrary1\obj\Debug\net10.0\ref\ClassLibrary1.dll

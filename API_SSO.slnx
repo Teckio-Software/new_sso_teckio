@@ -1,3 +1,4 @@
 <Solution>
-  <Project Path="API_SSO.csproj" />
+  <Project Path="API_SSO/API_SSO.csproj" />
+  <Project Path="ClassLibrary1/ClassLibrary1.csproj" Id="857fa958-f994-4de1-822c-9606820637fb" />
 </Solution>

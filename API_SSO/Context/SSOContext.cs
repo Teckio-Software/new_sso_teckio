@@ -1,0 +1,165 @@
+﻿using API_SSO.Modelos;
+using API_SSO.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System;
+
+namespace API_SSO.Context
+{
+    public partial class SSOContext : IdentityDbContext
+    {
+        public SSOContext() { }
+
+        public SSOContext(DbContextOptions<SSOContext> options)
+        : base(options)
+        {
+        }
+
+        public virtual DbSet<Cliente> Clientes { get; set; }
+
+        public virtual DbSet<ComprobantePago> ComprobantePagos { get; set; }
+
+        public virtual DbSet<Empresa> Empresas { get; set; }
+
+        public virtual DbSet<EmpresaXcliente> EmpresaXclientes { get; set; }
+
+        public virtual DbSet<Log> Logs { get; set; }
+
+        public virtual DbSet<ProyectoActual> ProyectoActuals { get; set; }
+
+        public virtual DbSet<Rol> Rols { get; set; }
+
+        public virtual DbSet<UsuarioXempresa> UsuarioXempresas { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.UseCollation("Modern_Spanish_CI_AS");
+
+            modelBuilder.Entity<Cliente>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Cliente__3214EC076D9B1004");
+
+                entity.ToTable("Cliente");
+
+                entity.Property(e => e.CantidadUsuariosXempresa).HasColumnName("CantidadUsuariosXEmpresa");
+                entity.Property(e => e.Correo).HasMaxLength(250);
+                entity.Property(e => e.CostoXusuario)
+                    .HasColumnType("decimal(28, 6)")
+                    .HasColumnName("CostoXUsuario");
+                entity.Property(e => e.RazonSocial).HasMaxLength(150);
+            });
+
+            modelBuilder.Entity<ComprobantePago>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Comproba__3214EC07B303B862");
+
+                entity.ToTable("ComprobantePago");
+
+                entity.Property(e => e.FechaCarga).HasColumnType("datetime");
+                entity.Property(e => e.IdUsuarioAutorizador).HasMaxLength(450);
+                entity.Property(e => e.Ruta).HasMaxLength(250);
+                entity.Property(e => e.UserId).HasMaxLength(450);
+
+                entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.ComprobantePagos)
+                    .HasForeignKey(d => d.IdCliente)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ComprobantePago_Cliente");
+            });
+
+            modelBuilder.Entity<Empresa>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Empresa__3214EC07F404C53A");
+
+                entity.ToTable("Empresa");
+
+                entity.Property(e => e.CodigoPostal).HasMaxLength(10);
+                entity.Property(e => e.FechaRegistro).HasColumnType("datetime");
+                entity.Property(e => e.NombreComercial).HasMaxLength(200);
+                entity.Property(e => e.Rfc).HasMaxLength(13);
+            });
+
+            modelBuilder.Entity<EmpresaXcliente>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__EmpresaX__3214EC07C02E4CB7");
+
+                entity.ToTable("EmpresaXCliente");
+
+                entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.EmpresaXclientes)
+                    .HasForeignKey(d => d.IdCliente)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_EmpresaXCliente_Cliente");
+
+                entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.EmpresaXclientes)
+                    .HasForeignKey(d => d.IdEmpresa)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_EmpresaXCliente_Empresa");
+            });
+
+            modelBuilder.Entity<Log>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Logs__3214EC074E498C08");
+
+                entity.Property(e => e.EsSso).HasColumnName("EsSSO");
+                entity.Property(e => e.Fecha).HasColumnType("datetime");
+                entity.Property(e => e.Metodo).HasMaxLength(150);
+                entity.Property(e => e.Nivel).HasMaxLength(100);
+                entity.Property(e => e.UserId).HasMaxLength(450);
+
+                entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.Logs)
+                    .HasForeignKey(d => d.IdEmpresa)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_Logs_Empresa");
+            });
+
+            modelBuilder.Entity<ProyectoActual>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Proyecto__3214EC07CC15C45C");
+
+                entity.ToTable("ProyectoActual");
+
+                entity.Property(e => e.UserId).HasMaxLength(450);
+
+                entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.ProyectoActuals)
+                    .HasForeignKey(d => d.IdEmpresa)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_ProyectoActual_Empresa");
+            });
+
+            modelBuilder.Entity<Rol>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Rol__3214EC076578E92A");
+
+                entity.ToTable("Rol");
+
+                entity.Property(e => e.Color).HasMaxLength(10);
+                entity.Property(e => e.Descripcion).HasMaxLength(1000);
+                entity.Property(e => e.FechaRegistro).HasColumnType("datetime");
+                entity.Property(e => e.IdAspNetRole).HasMaxLength(450);
+                entity.Property(e => e.Nombre).HasMaxLength(50);
+
+                entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.Rols)
+                    .HasForeignKey(d => d.IdEmpresa)
+                    .HasConstraintName("FK__Rol__IdEmpresa__02FC7413");
+            });
+
+            modelBuilder.Entity<UsuarioXempresa>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__UsuarioX__3214EC07780FFE8A");
+
+                entity.ToTable("UsuarioXEmpresa");
+
+                entity.Property(e => e.UserId).HasMaxLength(450);
+
+                entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.UsuarioXempresas)
+                    .HasForeignKey(d => d.IdEmpresa)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("FK_UsuarioXEmpresa_Empresa");
+            });
+
+            OnModelCreatingPartial(modelBuilder);
+        }
+
+        partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+    }
+}
