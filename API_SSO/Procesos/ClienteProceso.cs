@@ -65,8 +65,8 @@ namespace API_SSO.Procesos
             //var rolAdminRes = await _RolManager.CreateAsync(rolAdministrador);
             //if (rolAdminRes.Succeeded)
             //{
-                var usuarioCreado = await _UsuarioManager.FindByEmailAsync(clienteCreacion.CorreoElectronico);
-                await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Administrador");
+            var usuarioCreado = await _UsuarioManager.FindByEmailAsync(clienteCreacion.CorreoElectronico);
+            await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Administrador");
             //}
             //else
             //{

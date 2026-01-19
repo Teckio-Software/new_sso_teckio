@@ -17,7 +17,7 @@ namespace API_SSO.Utilidades
             services.AddScoped(typeof(BaseDeDatosProceso));
             services.AddScoped(typeof(RolProceso));
             services.AddScoped(typeof(UsuarioProceso));
-
+            services.AddScoped(typeof(EmpresaProceso));
             //API_SSO
             services.AddScoped(typeof(IClienteService<>),typeof(ClienteService<>));
             services.AddScoped(typeof(IComprobantePagoService<>),typeof(ComprobantePagoService<>));

@@ -10,7 +10,7 @@ using System.Text;
 namespace API_SSO.Controllers
 {
 
-    [Route("api/cuenta")]
+    [Route("api/usuario")]
     [ApiController]
     public class UsuarioController : ControllerBase
     {
