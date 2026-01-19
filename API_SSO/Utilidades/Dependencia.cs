@@ -27,6 +27,8 @@ namespace API_SSO.Utilidades
             services.AddScoped(typeof(IProyectoActualServce<>),typeof(ProyectoActualService<>));
             services.AddScoped(typeof(IUsuarioxEmpresaService<>),typeof(UsuarioXEmpresaService<>));
             services.AddScoped(typeof(IRolService<>),typeof(RolService<>));
+            services.AddScoped(typeof(IInvitacionService), typeof(InvitacionService));
+            services.AddScoped(typeof(ITokenInvitateService), typeof(TokenInvitateService));
         }
     }
 }

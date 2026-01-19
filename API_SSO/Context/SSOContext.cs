@@ -3,6 +3,7 @@ using API_SSO.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Runtime.Intrinsics.X86;
 
 namespace API_SSO.Context
 {
@@ -15,6 +16,7 @@ namespace API_SSO.Context
         {
         }
 
+        public DbSet<Invitacion> Invitacions => Set<Invitacion>();
         public virtual DbSet<Cliente> Clientes { get; set; }
 
         public virtual DbSet<ComprobantePago> ComprobantePagos { get; set; }
@@ -35,6 +37,17 @@ namespace API_SSO.Context
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.UseCollation("Modern_Spanish_CI_AS");
+
+            modelBuilder.Entity<Invitacion>(b =>
+            {
+                b.ToTable("Invitacion");
+                b.HasKey(x => x.Id);
+                b.Property(x => x.Email).IsRequired().HasMaxLength(320);
+                b.Property(x => x.TokenJti).IsRequired().HasMaxLength(64);
+                // (opcionales) índices útiles:
+                b.HasIndex(x => x.Email);
+                b.HasIndex(x => x.TokenJti).IsUnique();
+            });
 
             modelBuilder.Entity<Cliente>(entity =>
             {

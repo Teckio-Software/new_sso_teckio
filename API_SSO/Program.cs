@@ -1,4 +1,7 @@
 using API_SSO.Context;
+using API_SSO.DTO;
+using API_SSO.Servicios;
+using API_SSO.Servicios.Contratos;
 using API_SSO.Utilidades;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +30,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.InyectarDependencias(builder.Configuration);
+
+builder.Services.Configure<GraphOptions>(
+    builder.Configuration.GetSection("Graph"));
+
+var cfg = builder.Configuration;
+
+builder.Services.AddSingleton<IEmailService>(_ =>
+    new EmailService(
+        cfg["Graph:TenantId"]!,
+        cfg["Graph:ClientId"]!,
+        cfg["Graph:ClientSecret"]!
+
+    )
+);
 
 var app = builder.Build();
 
