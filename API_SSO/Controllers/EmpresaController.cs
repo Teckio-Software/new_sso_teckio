@@ -4,21 +4,22 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API_SSO.Controllers
 {
-    //[Route("api/empresa")]
-    //[ApiController]
-    //public class EmpresaController : ControllerBase
-    //{
-    //    private readonly EmpresaProceso _empresaProceso;
+    [Route("api/empresa")]
+    [ApiController]
+    public class EmpresaController : ControllerBase
+    {
+        private readonly EmpresaProceso _empresaProceso;
 
-    //    public EmpresaController(EmpresaProceso empresaProceso)
-    //    {
-    //        _empresaProceso = empresaProceso;
-    //    }
+        public EmpresaController(EmpresaProceso empresaProceso)
+        {
+            _empresaProceso = empresaProceso;
+        }
 
-    //    public async Task<ActionResult<RespuestaDTO>> CrearEmpresa(EmpresaDTO empresaDTO)
-    //    {
-    //        var respuesta = await _empresaProceso.CrearEmpresa(empresaDTO);
-    //        return respuesta;
-    //    }
-    //}
+        [HttpPost("crearEmpresa")]
+        public async Task<ActionResult<RespuestaDTO>> CrearEmpresa([FromBody] EmpresaDTO empresaDTO)
+        {
+            var respuesta = await _empresaProceso.CrearEmpresa(empresaDTO);
+            return respuesta;
+        }
+    }
 }
