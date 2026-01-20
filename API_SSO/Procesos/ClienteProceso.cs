@@ -1,5 +1,6 @@
 ﻿using API_SSO.Context;
 using API_SSO.DTO;
+using API_SSO.DTOs;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
 using System.Reflection.Metadata;
@@ -14,17 +15,21 @@ namespace API_SSO.Procesos
         private readonly BaseDeDatosProceso _baseDeDatosProceso;
         private readonly RoleManager<IdentityRole> _RolManager;
         private readonly RolProceso _rolProceso;
+        private readonly ComprobantePagoProceso _comprobantePago;
+        private readonly IClienteService<SSOContext> _clienteService;
 
-        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RoleManager<IdentityRole> rolManager, RolProceso rolProceso)
+        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RoleManager<IdentityRole> rolManager, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService)
         {
             _UsuarioManager = usuarioManager;
             _EmpresaService = empresaService;
             _baseDeDatosProceso = baseDeDatosProceso;
             _RolManager = rolManager;
             _rolProceso = rolProceso;
+            _comprobantePago = comprobantePago;
+            _clienteService = clienteService;
         }
 
-        public async Task<RespuestaDTO> CrearCliente(ClienteCreacionDTO clienteCreacion)
+        public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             //Primero verifica que el correo, nombre y contraseña no estén vacíos
@@ -137,6 +142,54 @@ namespace API_SSO.Procesos
                     await _UsuarioManager.AddToRoleAsync(invitadoObtenido, roles[usuario.rolInvitado].Nombre);
                 }
             }
+            return respuesta;
+        }
+
+        public async Task<RespuestaDTO> CrearCliente(ClienteConComprobanteDTO informacion, List<System.Security.Claims.Claim> claims)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            //Primero verifica que el correo, razón social y el comprobante no estén vacíos
+            if (
+                string.IsNullOrEmpty(informacion.Correo)
+                || string.IsNullOrEmpty(informacion.RazonSocial)
+                || (informacion.Comprobante) == null
+                )
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Capture toda la información.";
+                return respuesta;
+            }
+            //Valida la forma del correo electrónico
+            var respuesta2 = Regex.IsMatch(informacion.Correo,
+                    @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+                    RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+            if (!respuesta2)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Capture un correo electrónico válido";
+                return respuesta;
+            }
+            //Crea el cliente
+            ClienteDTO cliente = new ClienteDTO
+            {
+                RazonSocial = informacion.RazonSocial,
+
+                Correo = informacion.Correo,
+                DiaPago = informacion.DiaPago,
+                CantidadEmpresas = informacion.CantidadEmpresas,
+                CantidadUsuariosXempresa = informacion.CantidadUsuariosXEmpresa,
+                CostoXusuario = informacion.DiaPago,
+                CorreoConfirmed = false,
+                Eliminado = false
+            };
+            var clienteCreado = _clienteService.CrearYObtener(cliente);
+            if (cliente.Id <= 0)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ocurrió un problema al intentar crear al cliente";
+                return respuesta;
+            }
+            respuesta = await _comprobantePago.SubirComprobante(informacion.Comprobante, clienteCreado.Id, claims);
             return respuesta;
         }
     }

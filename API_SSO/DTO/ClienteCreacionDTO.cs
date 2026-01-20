@@ -47,5 +47,16 @@
         public string? Color { get; set; }
 
     }
+
+    public class ClienteConComprobanteDTO
+    {
+        public string? RazonSocial { get; set; }
+        public string? Correo { get; set; }
+        public int DiaPago { get; set; }
+        public int CantidadEmpresas { get; set; }
+        public int CostoXUsuario { get; set; }
+        public int CantidadUsuariosXEmpresa { get; set; }
+        public IFormFile Comprobante { get; set; }
+    }
 }
 

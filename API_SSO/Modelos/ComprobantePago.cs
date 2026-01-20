@@ -13,7 +13,7 @@ public partial class ComprobantePago
 
     public string? Ruta { get; set; }
 
-    public bool? Estatus { get; set; }
+    public int? Estatus { get; set; }
 
     public DateTime? FechaCarga { get; set; }
 
