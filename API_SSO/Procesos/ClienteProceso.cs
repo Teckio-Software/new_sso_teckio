@@ -180,7 +180,9 @@ namespace API_SSO.Procesos
                 CantidadUsuariosXempresa = informacion.CantidadUsuariosXEmpresa,
                 CostoXusuario = informacion.DiaPago,
                 CorreoConfirmed = false,
-                Eliminado = false
+                Eliminado = false,
+                Estatus = true,
+                FechaRegistro = DateTime.Now,
             };
             var clienteCreado = _clienteService.CrearYObtener(cliente);
             if (cliente.Id <= 0)
@@ -191,6 +193,12 @@ namespace API_SSO.Procesos
             }
             respuesta = await _comprobantePago.SubirComprobante(informacion.Comprobante, clienteCreado.Id, claims);
             return respuesta;
+        }
+
+        public async Task<List<ClienteDTO>> ObtenerTodos()
+        {
+            var lista = await _clienteService.ObtenerTodos();
+            return lista;
         }
     }
 }

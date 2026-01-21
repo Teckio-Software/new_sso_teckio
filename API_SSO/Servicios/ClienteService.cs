@@ -21,6 +21,8 @@ namespace API_SSO.Servicios
         public async Task<ClienteDTO> CrearYObtener(ClienteDTO clienteDTO)
         {
             clienteDTO.Eliminado = false;
+            clienteDTO.Estatus = true;
+            clienteDTO.FechaRegistro = DateTime.Now;
             var objetoCreado = await _repository.Crear(_Mapper.Map<Cliente>(clienteDTO));
             return _Mapper.Map<ClienteDTO>(objetoCreado);
         }
@@ -44,6 +46,7 @@ namespace API_SSO.Servicios
                 objetoEncontrado.CantidadUsuariosXempresa = clienteDTO.CantidadUsuariosXempresa;
                 objetoEncontrado.CostoXusuario = clienteDTO.CostoXusuario;
                 objetoEncontrado.CorreoConfirmed = clienteDTO.CorreoConfirmed;
+                objetoEncontrado.Estatus = clienteDTO.Estatus;
                 respuesta.Estatus = await _repository.Editar(objetoEncontrado);
                 respuesta.Descripcion = respuesta.Estatus ? "Cliente editado exitosamente." : "Ocurrio un error al intentar editar el cliente.";
                 return respuesta;
