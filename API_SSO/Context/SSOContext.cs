@@ -51,16 +51,23 @@ namespace API_SSO.Context
 
             modelBuilder.Entity<Cliente>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("PK__Cliente__3214EC076D9B1004");
-
                 entity.ToTable("Cliente");
 
-                entity.Property(e => e.CantidadUsuariosXempresa).HasColumnName("CantidadUsuariosXEmpresa");
-                entity.Property(e => e.Correo).HasMaxLength(250);
+                entity.HasKey(e => e.Id);
+
                 entity.Property(e => e.CostoXusuario)
-                    .HasColumnType("decimal(28, 6)")
-                    .HasColumnName("CostoXUsuario");
+                    .HasColumnType("decimal(28, 6)");
+
+                entity.Property(e => e.Estatus)
+                    .IsRequired()
+                    .HasDefaultValueSql("((1))");
+
+                entity.Property(e => e.FechaRegistro)
+                    .IsRequired()
+                    .HasDefaultValueSql("(getdate())");
+
                 entity.Property(e => e.RazonSocial).HasMaxLength(150);
+                entity.Property(e => e.Correo).HasMaxLength(250);
             });
 
             modelBuilder.Entity<ComprobantePago>(entity =>

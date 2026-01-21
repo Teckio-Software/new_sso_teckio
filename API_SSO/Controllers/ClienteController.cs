@@ -1,4 +1,5 @@
 ﻿using API_SSO.DTO;
+using API_SSO.DTOs;
 using API_SSO.Procesos;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,6 +29,13 @@ namespace API_SSO.Controllers
             var authen = HttpContext.User;
             var resultado = await _proceso.CrearCliente(cliente, authen.Claims.ToList());
             return resultado;
+        }
+
+        [HttpGet("todos")]
+        public async Task<ActionResult<List<ClienteDTO>>> ObtenerTodos()
+        {
+            var lista = await _proceso.ObtenerTodos();
+            return lista;
         }
     }
 }

@@ -26,14 +26,14 @@ namespace API_SSO.Controllers
         //    return resultado;
         //}
 
-        [HttpGet("cancelarComprobante/{idComprobante: int}")]
+        [HttpGet("cancelarComprobante/{idComprobante:int}")]
         public async Task<ActionResult<RespuestaDTO>> CancelarComprobante(int idComprobante)
         {
             var resultado = await _proceso.CancelaComprobantePago(idComprobante);
             return resultado;
         }
 
-        [HttpGet("autorizarComprobante/{idComprobante: int}")]
+        [HttpGet("autorizarComprobante/{idComprobante:int}")]
         public async Task<ActionResult<RespuestaDTO>> AutorizarComprobante(int idComprobante, CancellationToken ct)
         {
             var authen = HttpContext.User;

@@ -23,6 +23,10 @@ public partial class Cliente
 
     public bool? Eliminado { get; set; }
 
+    public bool Estatus { get; set; }
+
+    public DateTime FechaRegistro { get; set; }
+
     public virtual ICollection<ComprobantePago> ComprobantePagos { get; set; } = new List<ComprobantePago>();
 
     public virtual ICollection<EmpresaXcliente> EmpresaXclientes { get; set; } = new List<EmpresaXcliente>();
