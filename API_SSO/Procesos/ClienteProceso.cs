@@ -184,7 +184,7 @@ namespace API_SSO.Procesos
                 Estatus = true,
                 FechaRegistro = DateTime.Now,
             };
-            var clienteCreado = _clienteService.CrearYObtener(cliente);
+            var clienteCreado = await _clienteService.CrearYObtener(cliente);
             if (cliente.Id <= 0)
             {
                 respuesta.Estatus = false;
