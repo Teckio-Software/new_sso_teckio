@@ -55,8 +55,13 @@ namespace API_SSO.Context
 
                 entity.HasKey(e => e.Id);
 
+                // Configuración para el decimal de alta precisión
                 entity.Property(e => e.CostoXusuario)
                     .HasColumnType("decimal(28, 6)");
+
+                // Mapeo específico para SQL 'date'
+                entity.Property(e => e.DiaPago)
+                    .HasColumnType("date");
 
                 entity.Property(e => e.Estatus)
                     .IsRequired()

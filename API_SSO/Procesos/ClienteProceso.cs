@@ -178,7 +178,7 @@ namespace API_SSO.Procesos
                 DiaPago = informacion.DiaPago,
                 CantidadEmpresas = informacion.CantidadEmpresas,
                 CantidadUsuariosXempresa = informacion.CantidadUsuariosXEmpresa,
-                CostoXusuario = informacion.DiaPago,
+                CostoXusuario = informacion.CostoXUsuario,
                 CorreoConfirmed = false,
                 Eliminado = false,
                 Estatus = true,

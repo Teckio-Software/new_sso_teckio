@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace API_SSO.Models;
 
@@ -11,7 +12,9 @@ public partial class Cliente
 
     public string? Correo { get; set; }
 
-    public int? DiaPago { get; set; }
+    // Cambio detectado: De int a Date
+    [Column(TypeName = "date")]
+    public DateTime? DiaPago { get; set; }
 
     public int? CantidadEmpresas { get; set; }
 

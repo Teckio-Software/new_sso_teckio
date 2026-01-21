@@ -10,7 +10,7 @@ namespace API_SSO.DTOs
 
         public string? Correo { get; set; }
 
-        public int? DiaPago { get; set; }
+        public DateTime? DiaPago { get; set; }
 
         public int? CantidadEmpresas { get; set; }
 
