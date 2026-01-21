@@ -25,7 +25,43 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
 .AddDefaultTokenProviders();
 
 //Configura los CORS y otros servicios
-var origenesPermitidos = builder.Configuration.GetValue<string>("OrigenesPermitidos")!.Split(",");
+var origenesPermitidos = builder.Configuration.GetValue<string>("OrigenesPermitidos")!.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+if (origenesPermitidos.Length == 0)
+    throw new InvalidOperationException("Falta 'OrigenesPermitidos' en configuración.");
+
+builder.Services.AddCors(zOptions =>
+{
+    //zOptions.AddDefaultPolicy(zBuilder =>
+    //{
+    //    zBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()
+    //      .WithExposedHeaders(new string[] { "CantidadTotalRegistros" });
+    //});
+
+    var allowedHosts = builder.Configuration.GetSection("AllowedHosts").Get<string[]>();
+
+    if (allowedHosts != null && allowedHosts.Length > 0)
+    {
+        zOptions.AddDefaultPolicy(builder =>
+        {
+            builder.WithOrigins(allowedHosts)
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+    }
+    else
+    {
+        // Configuración de CORS por defecto si no hay AllowedHosts configurados
+        zOptions.AddDefaultPolicy(builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+    }
+
+
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
