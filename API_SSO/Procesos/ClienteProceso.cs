@@ -119,12 +119,16 @@ namespace API_SSO.Procesos
             //Crea su FSI y FSR
             await _baseDeDatosProceso.CrearFSI(IdProyecto, nombreBD);
             await _baseDeDatosProceso.CrearFSR(IdProyecto, nombreBD);
-            List<RolDTO> roles = new List<RolDTO>();
+            List<RolCreacionDTO> roles = new List<RolCreacionDTO>();
             //Crea los roles
             foreach(var rol in clienteCreacion.roles)
             {
                 var rolCreado = await _rolProceso.CrearRol(rol, empresaCreada.Id);
-                roles.Add(rolCreado);
+                roles.Add(new RolCreacionDTO
+                {
+                    Id = rolCreado.Id,
+                    Nombre = (rol.Nombre+"-"+rol.Id)
+                });
             }
             //Crea los usuarios invitados
             foreach(var usuario in clienteCreacion.invitaciones)

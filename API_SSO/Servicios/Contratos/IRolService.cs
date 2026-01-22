@@ -10,6 +10,6 @@ namespace API_SSO.Servicios.Contratos
         Task<RolDTO> ObtenerXId(int id);
         Task<RolDTO> CrearYObtener(RolDTO rol);
         Task<RespuestaDTO> Editar(RolDTO rol);
-        Task<RespuestaDTO> Eliminar(int id);
+        //Task<RespuestaDTO> Eliminar(int id);
     }
 }

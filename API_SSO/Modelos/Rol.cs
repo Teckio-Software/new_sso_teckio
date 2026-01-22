@@ -6,8 +6,6 @@ namespace API_SSO.Modelos
     {
         public int Id { get; set; }
 
-        public string? Nombre { get; set; }
-
         public DateTime? FechaRegistro { get; set; }
 
         public string? Descripcion { get; set; }
@@ -18,7 +16,11 @@ namespace API_SSO.Modelos
 
         public string? IdAspNetRole { get; set; }
 
-        public bool? Borrado { get; set; }
+        public bool? DeSistema { get; set; }
+
+        public bool? General { get; set; }
+
+        public bool? Activo { get; set; }
 
         public virtual Empresa? IdEmpresaNavigation { get; set; }
     }

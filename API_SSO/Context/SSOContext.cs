@@ -17,6 +17,10 @@ namespace API_SSO.Context
         }
 
         public DbSet<Invitacion> Invitacions => Set<Invitacion>();
+
+        public virtual DbSet<CatalogoClaim> CatalogoClaims { get; set; }
+
+        public virtual DbSet<CatalogoSeccion> CatalogoSeccions { get; set; }
         public virtual DbSet<Cliente> Clientes { get; set; }
 
         public virtual DbSet<ComprobantePago> ComprobantePagos { get; set; }
@@ -47,6 +51,29 @@ namespace API_SSO.Context
                 // (opcionales) índices útiles:
                 b.HasIndex(x => x.Email);
                 b.HasIndex(x => x.TokenJti).IsUnique();
+            });
+
+            modelBuilder.Entity<CatalogoClaim>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Catalogo__3214EC07AB2A5E13");
+
+                entity.Property(e => e.CodigoClaim).HasMaxLength(200);
+                entity.Property(e => e.Descripcion).HasMaxLength(150);
+                entity.Property(e => e.Nombre).HasMaxLength(50);
+
+                entity.HasOne(d => d.IdSeccionNavigation).WithMany(p => p.CatalogoClaims)
+                    .HasForeignKey(d => d.IdSeccion)
+                    .HasConstraintName("FK__CatalogoC__IdSec__2180FB33");
+            });
+
+            modelBuilder.Entity<CatalogoSeccion>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Catalogo__3214EC0732AE614E");
+
+                entity.ToTable("CatalogoSeccion");
+
+                entity.Property(e => e.Descripcion).HasMaxLength(150);
+                entity.Property(e => e.Nombre).HasMaxLength(50);
             });
 
             modelBuilder.Entity<Cliente>(entity =>
@@ -157,11 +184,13 @@ namespace API_SSO.Context
 
                 entity.ToTable("Rol");
 
+                entity.Property(e => e.Activo).HasDefaultValue(true);
                 entity.Property(e => e.Color).HasMaxLength(10);
+                entity.Property(e => e.DeSistema).HasDefaultValue(false);
                 entity.Property(e => e.Descripcion).HasMaxLength(1000);
                 entity.Property(e => e.FechaRegistro).HasColumnType("datetime");
+                entity.Property(e => e.General).HasDefaultValue(false);
                 entity.Property(e => e.IdAspNetRole).HasMaxLength(450);
-                entity.Property(e => e.Nombre).HasMaxLength(50);
 
                 entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.Rols)
                     .HasForeignKey(d => d.IdEmpresa)

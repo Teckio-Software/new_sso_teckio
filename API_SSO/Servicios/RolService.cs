@@ -20,7 +20,9 @@ namespace API_SSO.Servicios
         public async Task<RolDTO> CrearYObtener(RolDTO rol)
         {
             rol.FechaRegistro = DateTime.Now;
-            rol.Borrado = false;
+            rol.DeSistema = false;
+            rol.General = false;
+            rol.Activo = true;
             var objetoCreado = await _repository.Crear(_Mapper.Map<Rol>(rol));
             return _Mapper.Map<RolDTO>(objetoCreado);
         }
@@ -36,38 +38,39 @@ namespace API_SSO.Servicios
                 return respuesta;
             }
             objetoEncontrado.Descripcion = rol.Descripcion;
-            objetoEncontrado.Nombre = rol.Nombre;
             objetoEncontrado.Color = rol.Color;
+            objetoEncontrado.Activo = rol.Activo;
+            objetoEncontrado.General = rol.General;
             respuesta.Estatus = await _repository.Editar(objetoEncontrado);
             respuesta.Descripcion = respuesta.Estatus ? "Rol editado correctamente." : "Ocurrió un error al intentar editar el rol.";
             return respuesta;
         }
 
-        public async Task<RespuestaDTO> Eliminar(int id)
-        {
-            RespuestaDTO respuesta = new RespuestaDTO();
-            var objetoEncontrado = await _repository.Obtener(r => r.Id == id);
-            if (objetoEncontrado.Id <= 0)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "No se encontró el rol.";
-                return respuesta;
-            }
-            objetoEncontrado.Borrado = true;
-            respuesta.Estatus = await _repository.Editar(objetoEncontrado);
-            respuesta.Descripcion = respuesta.Estatus ? "Rol eliminado correctamente." : "Ocurrió un error al intentar eliminar el rol.";
-            return respuesta;
-        }
+        //public async Task<RespuestaDTO> Eliminar(int id)
+        //{
+        //    RespuestaDTO respuesta = new RespuestaDTO();
+        //    var objetoEncontrado = await _repository.Obtener(r => r.Id == id);
+        //    if (objetoEncontrado.Id <= 0)
+        //    {
+        //        respuesta.Estatus = false;
+        //        respuesta.Descripcion = "No se encontró el rol.";
+        //        return respuesta;
+        //    }
+        //    objetoEncontrado.Borrado = true;
+        //    respuesta.Estatus = await _repository.Editar(objetoEncontrado);
+        //    respuesta.Descripcion = respuesta.Estatus ? "Rol eliminado correctamente." : "Ocurrió un error al intentar eliminar el rol.";
+        //    return respuesta;
+        //}
 
         public async Task<List<RolDTO>> ObtenerTodos()
         {
-            var lista = await _repository.ObtenerTodos(r => (bool)!r.Borrado);
+            var lista = await _repository.ObtenerTodos();
             return _Mapper.Map<List<RolDTO>>(lista);
         }
 
         public async Task<RolDTO> ObtenerXId(int id)
         {
-            var resultado = await _repository.Obtener(r => r.Id == id && (bool)!r.Borrado);
+            var resultado = await _repository.Obtener(r => r.Id == id);
             return _Mapper.Map<RolDTO>(resultado);
         }
     }
