@@ -77,8 +77,8 @@
             "name": "DiaPago",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string",
+              "format": "date-time"
             }
           },
           {
@@ -698,8 +698,8 @@
             "nullable": true
           },
           "diaPago": {
-            "type": "integer",
-            "format": "int32",
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           },
           "cantidadEmpresas": {

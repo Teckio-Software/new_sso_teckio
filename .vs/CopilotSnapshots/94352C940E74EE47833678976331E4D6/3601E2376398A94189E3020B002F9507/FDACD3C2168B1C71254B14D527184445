@@ -1,0 +1,9 @@
+﻿using Microsoft.AspNetCore.Http;
+
+namespace API_SSO.Services.S3
+{
+ public interface IS3Service
+ {
+ // Future: method to upload a file will go here.
+ }
+}

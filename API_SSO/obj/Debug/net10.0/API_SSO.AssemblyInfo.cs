@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("API_SSO")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8732498233e0743a06b8de71b2928f65a798a5f9")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8ff7b2f923f97bac451e5543b3f9b3ed54d350f9")]
 [assembly: System.Reflection.AssemblyProductAttribute("API_SSO")]
 [assembly: System.Reflection.AssemblyTitleAttribute("API_SSO")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
