@@ -12,6 +12,8 @@
 
         public int? IdSeccion { get; set; }
 
+        public string? ClaimType { get; set; }
+
         public virtual CatalogoSeccion? IdSeccionNavigation { get; set; }
     }
 }

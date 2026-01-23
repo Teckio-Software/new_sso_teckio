@@ -45,7 +45,23 @@
         public string? Nombre { get; set; }
         public string? Descripcion { get; set; }
         public string? Color { get; set; }
+        public int IdEmpresa { get; set; }
 
+        public List<RoleClaimViewModel> Claims { get; set; } = new List<RoleClaimViewModel>();
+    }
+
+    public class RolEdicionDTO
+    {
+        public RolDTO rol { get; set; } = new RolDTO();
+        public List<RoleClaimViewModel> Claims { get; set; } = new List<RoleClaimViewModel>();
+
+    }
+
+    public class RoleClaimViewModel
+    {
+        public string Type { get; set; }
+        public string Value { get; set; }
+        public bool Selected { get; set; } // Esto alimentará el Checkbox
     }
 
     public class ClienteConComprobanteDTO
