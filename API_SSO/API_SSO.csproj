@@ -28,6 +28,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
+
+    <!-- AWS SDK packages for S3 support -->
+    <PackageReference Include="AWSSDK.S3" Version="3.7.0.64" />
+    <PackageReference Include="Amazon.Extensions.NETCore.Setup" Version="3.7.0" />
   </ItemGroup>
 
 </Project>

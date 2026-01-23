@@ -1,0 +1,13 @@
+﻿using Microsoft.AspNetCore.Http;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace API_SSO.Services.S3
+{
+ public interface IS3Service
+ {
+ // Upload the provided file to S3 under the given key prefix.
+ // Returns the public URL of the uploaded object (or the S3 key if you prefer).
+ Task<string> UploadFileAsync(IFormFile file, string keyPrefix, CancellationToken cancellationToken);
+ }
+}

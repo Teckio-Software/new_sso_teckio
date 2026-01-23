@@ -19,7 +19,7 @@
       },
       {
         "Name": "DiaPago",
-        "Type": "System.Int32",
+        "Type": "System.DateTime",
         "IsRequired": false
       },
       {
