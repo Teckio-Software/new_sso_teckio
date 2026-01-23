@@ -8,6 +8,7 @@
 /.vs/API_SSO.slnx/v18
 # Visual Studio
 .vs/
+.vs/*
 *.suo
 
 # Build outputs
