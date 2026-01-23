@@ -123,7 +123,8 @@ namespace API_SSO.Procesos
             //Crea los roles
             foreach(var rol in clienteCreacion.roles)
             {
-                var rolCreado = await _rolProceso.CrearRol(rol, empresaCreada.Id);
+                rol.IdEmpresa = empresaCreada.Id;
+                var rolCreado = await _rolProceso.CrearRol(rol);
                 roles.Add(new RolCreacionDTO
                 {
                     Id = rolCreado.Id,
@@ -189,7 +190,7 @@ namespace API_SSO.Procesos
                 FechaRegistro = DateTime.Now,
             };
             var clienteCreado = await _clienteService.CrearYObtener(cliente);
-            if (cliente.Id <= 0)
+            if (clienteCreado.Id <= 0)
             {
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "Ocurrió un problema al intentar crear al cliente";
