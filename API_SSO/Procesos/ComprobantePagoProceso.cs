@@ -11,13 +11,15 @@ namespace API_SSO.Procesos
         private readonly IConfiguration _configuracion;
         private readonly IInvitacionService _invitacionService;
         private readonly IClienteService<SSOContext> _clienteService;
+        private readonly IStorageService _storageService;
 
-        public ComprobantePagoProceso(IComprobantePagoService<SSOContext> comprobanteservice, IConfiguration configuracion, IInvitacionService invitacionService, IClienteService<SSOContext> clienteService)
+        public ComprobantePagoProceso(IComprobantePagoService<SSOContext> comprobanteservice, IConfiguration configuracion, IInvitacionService invitacionService, IClienteService<SSOContext> clienteService, IStorageService storageService)
         {
             _Comprobanteservice = comprobanteservice;
             _configuracion = configuracion;
             _invitacionService = invitacionService;
             _clienteService = clienteService;
+            _storageService = storageService;
         }
 
         public async Task<RespuestaDTO> SubirComprobante(IFormFile archivo, int idCliente, List<System.Security.Claims.Claim> claims)
@@ -30,14 +32,7 @@ namespace API_SSO.Procesos
                 respuesta.Estatus = false;
                 return respuesta;
             }
-            //Obtiene la ruta base para guardar las imagenes
-            var ruta = _configuracion["Rutas:Imagenes"];
-            if(ruta == null)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "No se encontró la ruta de destino para las imágenes.";
-                return respuesta;
-            }
+
             if(archivo == null)
             {
                 respuesta.Estatus = false;
@@ -50,58 +45,33 @@ namespace API_SSO.Procesos
                 respuesta.Descripcion = "El tipo de archivo es incorrecto, debe ser pdf, jpg, jpeg o png";
                 return respuesta;
             }
-            var fecha = DateTime.Now;
-            var mes = fecha.ToString("MMMM", new System.Globalization.CultureInfo("es-ES"));
-            //Obtiene el nombre del archivo
-            var nombreArchivo = DateTime.Now.Millisecond + archivo.FileName;
-            //Genera la ruta compuesta
-            var rutaCompuesta = Path.Combine(ruta, fecha.Year.ToString(), mes, fecha.Day.ToString());
-            //Comprueba si la ruta existe, si no existe la crea
-            if (!Directory.Exists(rutaCompuesta))
+
+            // Use S3 storage service to upload file
+            string keyPrefix = $"comprobantes/{idCliente}";
+            string s3Url;
+            try
             {
-                try
-                {
-                    Directory.CreateDirectory(rutaCompuesta);
-                }
-                catch
-                {
-                    respuesta.Descripcion = "Ocurrió un error al intentar subir el archivo.";
-                    respuesta.Estatus = false;
-                    return respuesta;
-                }
+                s3Url = await _storageService.UploadFileAsync(archivo, keyPrefix);
             }
-            //Crea la ruta final con el nombre del archivo
-            var rutaFinal = Path.Combine(rutaCompuesta, nombreArchivo);
-            var pesoBytes = 0;
-            using (var memoryStream = new MemoryStream())
+            catch
             {
-                try
-                {
-                    //Lee el archivo y lo guarda en la ruta final
-                    await archivo.CopyToAsync(memoryStream);
-                    var contenido = memoryStream.ToArray();
-                    pesoBytes = contenido.Length;
-                    await File.WriteAllBytesAsync(rutaFinal, contenido);
-                }
-                catch
-                {
-                    respuesta.Descripcion = "Ocurrió un error al intentar subir el archivo.";
-                    respuesta.Estatus = false;
-                    return respuesta;
-                }
+                respuesta.Descripcion = "Ocurrió un error al intentar subir el archivo a almacenamiento S3.";
+                respuesta.Estatus = false;
+                return respuesta;
             }
+
             ComprobantePagoDTO comprobante = new ComprobantePagoDTO
             {
                 IdCliente = idCliente,
                 UserId = IdUsStr[0].Value,
-                Ruta = rutaFinal,
-                Estatus = 0, //Capturado
+                Ruta = s3Url,
+                Estatus =0, //Capturado
                 FechaCarga = DateTime.Now,
                 IdUsuarioAutorizador = null,
                 Eliminado = false,
             };
             var comprobanteCreado = await _Comprobanteservice.CrearYObtener(comprobante);
-            if (comprobanteCreado.Id <= 0)
+            if (comprobanteCreado.Id <=0)
             {
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "Ocurrió un error al intentar guardar el comprobante";
@@ -116,13 +86,13 @@ namespace API_SSO.Procesos
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             var comprobante = await _Comprobanteservice.ObtenerXId(idComprobante);
-            if (comprobante.Id <= 0)
+            if (comprobante.Id <=0)
             {
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "No se encontró el comprobante de pago";
                 return respuesta;
             }
-            comprobante.Estatus = 2; //Cancelado
+            comprobante.Estatus =2; //Cancelado
             respuesta = await _Comprobanteservice.Editar(comprobante);
             return respuesta;
         }
@@ -138,19 +108,19 @@ namespace API_SSO.Procesos
                 return respuesta;
             }
             var comprobante = await _Comprobanteservice.ObtenerXId(idComprobante);
-            if (comprobante.Id <= 0)
+            if (comprobante.Id <=0)
             {
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "No se encontró el comprobante de pago";
                 return respuesta;
             }
-            comprobante.Estatus = 1; //Autorizado
+            comprobante.Estatus =1; //Autorizado
             comprobante.IdUsuarioAutorizador = IdUsStr[0].Value;
             respuesta = await _Comprobanteservice.Editar(comprobante);
             if (respuesta.Estatus)
             {
                 var cliente = await _clienteService.ObtenerXId(comprobante.IdCliente);
-                if(cliente.Id <= 0)
+                if(cliente.Id <=0)
                 {
                     respuesta.Estatus = false;
                     respuesta.Descripcion = "Ocurrío un error al encontrar al cliente";

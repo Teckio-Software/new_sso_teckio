@@ -96,6 +96,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseCors();
 
 // El orden aquí es vital para la seguridad
 app.UseAuthentication();

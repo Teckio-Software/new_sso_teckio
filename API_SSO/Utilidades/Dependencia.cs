@@ -2,6 +2,7 @@
 using API_SSO.Servicios;
 using API_SSO.Servicios.Contratos;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 
 namespace API_SSO.Utilidades
 {
@@ -30,6 +31,9 @@ namespace API_SSO.Utilidades
             services.AddScoped(typeof(IRolService<>),typeof(RolService<>));
             services.AddScoped(typeof(IInvitacionService), typeof(InvitacionService));
             services.AddScoped(typeof(ITokenInvitateService), typeof(TokenInvitateService));
+
+            // Storage (S3)
+            services.AddScoped<IStorageService, S3StorageService>();
         }
     }
 }

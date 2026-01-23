@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+    <PackageReference Include="AWSSDK.S3" Version="4.0.17.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Negotiate" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.1" />
@@ -28,10 +29,6 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.0" />
-
-    <!-- AWS SDK packages for S3 support -->
-    <PackageReference Include="AWSSDK.S3" Version="3.7.0.64" />
-    <PackageReference Include="Amazon.Extensions.NETCore.Setup" Version="3.7.0" />
   </ItemGroup>
 
 </Project>
