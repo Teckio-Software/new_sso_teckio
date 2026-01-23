@@ -1,5 +1,6 @@
 ﻿using API_SSO.Context;
 using API_SSO.DTO;
+using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
@@ -45,42 +46,56 @@ namespace API_SSO.Procesos
             var selectedClaims = rol.Claims.Where(c => c.Selected).ToList();
             foreach (var claim in selectedClaims)
             {
-                await _RolManager.AddClaimAsync(identityRol, new Claim("Permission", claim.Value));
+                await _RolManager.AddClaimAsync(identityRol, new Claim(claim.Type, claim.Value));
             }
             return rolCreado;
         }
 
-        //public async Task<RespuestaDTO> EditarRol(RolEdicionDTO objeto)
-        //{
-        //    RespuestaDTO respuesta = new RespuestaDTO();
-        //    RolDTO modelo = new RolDTO
-        //    {
-        //        Descripcion = objeto.rol.Descripcion,
-        //        Color = objeto.rol.Color,
-        //        IdEmpresa = objeto.rol.IdEmpresa,
-        //        IdAspNetRole = objeto.rol.IdAspNetRole,
-        //        General = objeto.rol.General,
-        //        Activo = objeto.rol.Activo,
-        //    };
-        //    respuesta = await _service.Editar(modelo);
-        //    if (!respuesta.Estatus)
-        //    {
-        //        return respuesta;
-        //    }
-        //    if(objeto.rol.IdAspNetRole == null)
-        //    {
-        //        respuesta.Estatus = false;
-        //        respuesta.Descripcion = "Ocurrió un error al intentar editar el rol";
-        //        return respuesta;
-        //    }
-        //    var identityRole = await _RolManager.FindByIdAsync(modelo.IdAspNetRole);
-        //    if (identityRole == null)
-        //    {
-        //        respuesta.Estatus = false;
-        //        respuesta.Descripcion = "No se encontró el rol";
-        //        return respuesta;
-        //    }
-        //    await _RolManager.RemoveClaimAsync(identityRole);
-        //}
+        public async Task<RespuestaDTO> EditarRol(RolEdicionDTO objeto)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            RolDTO modelo = new RolDTO
+            {
+                Descripcion = objeto.rol.Descripcion,
+                Color = objeto.rol.Color,
+                IdEmpresa = objeto.rol.IdEmpresa,
+                IdAspNetRole = objeto.rol.IdAspNetRole,
+                General = objeto.rol.General,
+                Activo = objeto.rol.Activo,
+            };
+            respuesta = await _service.Editar(modelo);
+            if (!respuesta.Estatus)
+            {
+                return respuesta;
+            }
+            if (objeto.rol.IdAspNetRole == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ocurrió un error al intentar editar el rol";
+                return respuesta;
+            }
+            var identityRole = await _RolManager.FindByIdAsync(modelo.IdAspNetRole);
+            if (identityRole == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "No se encontró el rol";
+                return respuesta;
+            }
+            // 1. Eliminar claims actuales
+            var claims = await _RolManager.GetClaimsAsync(identityRole);
+            foreach (var claim in claims)
+            {
+                await _RolManager.RemoveClaimAsync(identityRole, claim);
+            }
+            //Agrega los claims
+            var selectedClaims = objeto.Claims.Where(c => c.Selected).ToList();
+            foreach (var claim in selectedClaims)
+            {
+                await _RolManager.AddClaimAsync(identityRole, new Claim(claim.Type, claim.Value));
+            }
+            respuesta.Estatus = true;
+            respuesta.Descripcion = "Rol editado exitosamente.";
+            return respuesta;
+        }
     }
 }
