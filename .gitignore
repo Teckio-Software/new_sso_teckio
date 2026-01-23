@@ -584,3 +584,8 @@ API_SSO/obj/project.nuget.cache
 .vs/ProjectEvaluation/api_sso.metadata.v9.bin
 .vs/ProjectEvaluation/api_sso.projects.v9.bin
 .vs/ProjectEvaluation/api_sso.strings.v9.bin
+API_SSO/bin/Debug/net10.0/API_SSO.dll
+
+# Ignorar carpetas binarias y de compilación
+**/bin/
+**/obj/
