@@ -3,7 +3,9 @@ using API_SSO.DTO;
 using API_SSO.DTOs;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace API_SSO.Procesos
@@ -13,20 +15,20 @@ namespace API_SSO.Procesos
         private readonly UserManager<IdentityUser> _UsuarioManager;
         private readonly IEmpresaService<SSOContext> _EmpresaService;
         private readonly BaseDeDatosProceso _baseDeDatosProceso;
-        private readonly RoleManager<IdentityRole> _RolManager;
         private readonly RolProceso _rolProceso;
         private readonly ComprobantePagoProceso _comprobantePago;
         private readonly IClienteService<SSOContext> _clienteService;
+        private readonly SSOContext _dbContext;
 
-        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RoleManager<IdentityRole> rolManager, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService)
+        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService, SSOContext dbContext)
         {
             _UsuarioManager = usuarioManager;
             _EmpresaService = empresaService;
             _baseDeDatosProceso = baseDeDatosProceso;
-            _RolManager = rolManager;
             _rolProceso = rolProceso;
             _comprobantePago = comprobantePago;
             _clienteService = clienteService;
+            _dbContext = dbContext;
         }
 
         public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion)
@@ -202,8 +204,30 @@ namespace API_SSO.Procesos
 
         public async Task<List<ClienteDTO>> ObtenerTodos()
         {
-            var lista = await _clienteService.ObtenerTodos();
-            return lista;
+            var lista = _dbContext.Database.SqlQueryRaw<string>(""""
+                
+                SELECT C.Id
+                    ,[RazonSocial]
+                    ,[Correo]
+                    ,(SELECT COUNT(*) FROM EmpresaXCliente EX WHERE EX.IdCliente = C.Id) AS CantidadEmpresas
+                    ,(SELECT COUNT(*) FROM EmpresaXCliente EX INNER JOIN UsuarioXEmpresa UE ON EX.IdEmpresa = UE.IdEmpresa WHERE EX.IdCliente = C.Id)  AS CantidadUsuariosXEmpresa
+                    ,[CostoXUsuario]
+                    ,[CorreoConfirmed]
+                    ,C.Eliminado
+                    ,C.Estatus
+                    ,C.FechaRegistro
+                    ,[DiaPago]
+                FROM Cliente C
+                
+                """").ToList();
+
+            if (lista.Count <= 0)
+            {
+                return new List<ClienteDTO>();
+            }
+            string json = string.Join("", lista);
+            var datos = JsonSerializer.Deserialize<List<ClienteDTO>>(json);
+            return datos;
         }
     }
 }
