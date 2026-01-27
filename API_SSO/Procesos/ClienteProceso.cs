@@ -205,7 +205,6 @@ namespace API_SSO.Procesos
         public async Task<List<ClienteDTO>> ObtenerTodos()
         {
             var lista = _dbContext.Database.SqlQueryRaw<string>(""""
-                
                 SELECT C.Id
                     ,[RazonSocial]
                     ,[Correo]
@@ -218,7 +217,7 @@ namespace API_SSO.Procesos
                     ,C.FechaRegistro
                     ,[DiaPago]
                 FROM Cliente C
-                
+                for json path
                 """").ToList();
 
             if (lista.Count <= 0)
