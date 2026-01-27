@@ -1,5 +1,6 @@
 ﻿using API_SSO.DTO;
 using API_SSO.Procesos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -33,6 +34,31 @@ namespace API_SSO.Controllers
             var resultado = await _usuarioProceso.AsignarRol(rol);
             return resultado;
         }
-        
+
+        public record EnviarEmailRecuperacionDTO(string Email);
+
+        [HttpPost("enviarEmailRecuperacion")]
+        public async Task<ActionResult> EnviarEmailRecuperacion([FromBody] EnviarEmailRecuperacionDTO enviarEmailRecuperacionDTO, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(enviarEmailRecuperacionDTO.Email))
+            {
+                return BadRequest(new { ok = false, message = "Email requerido" });
+            }
+
+            var id = _usuarioProceso.EnviarEmailRecuperacion(enviarEmailRecuperacionDTO.Email, ct);
+            return Ok(new { ok = true, invitationId = id });
+        }
+
+
+        [HttpPost("restablecerContrasena")]
+        [Authorize]
+        public async Task<ActionResult<RespuestaDTO>> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
+        {
+            var email = User.FindFirst("email")?.Value;
+            objeto.Email = email;
+            var resultado = await _usuarioProceso.RestablecerContrasena(objeto);
+            return resultado;
+        }
+
     }
 }

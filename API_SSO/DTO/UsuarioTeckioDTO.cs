@@ -35,4 +35,11 @@ namespace API_SSO.DTO
         public string IdUsuario { get; set; }
         public string IdRol { get; set; }
     }
+
+    public class RecuperacionContrasenaDTO
+    {
+        public string Email { get; set; }
+        public string ContrasenaActual { get; set; }
+        public string NuevaContrasena { get; set; }
+    }
 }

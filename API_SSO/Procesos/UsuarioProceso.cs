@@ -1,4 +1,6 @@
 ﻿using API_SSO.DTO;
+using API_SSO.Modelos;
+using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,13 +15,17 @@ namespace API_SSO.Procesos
         private readonly RoleManager<IdentityRole> _RoleManager;
         private readonly SignInManager<IdentityUser> _SignInManager;
         private readonly IConfiguration _Configuracion;
+        private readonly IConfiguration _cfg;
+        private readonly IEmailService _email;
 
-        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager)
+        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IConfiguration cfg, IEmailService emailService)
         {
             _UserManager = userManager;
             _SignInManager = signInManager;
             _Configuracion = configuracion;
             _RoleManager = roleManager;
+            _cfg = cfg;
+            _email = emailService;
         }
 
         public async Task<IdentityUser> ObtenerUsuario(string parametro)
@@ -151,6 +157,74 @@ namespace API_SSO.Procesos
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "Ocurrió un problema al intentar asignar el rol.";
             }
+            return respuesta;
+        }
+
+        public async Task EnviarEmailRecuperacion(string email, CancellationToken ct)
+        {
+            //Crea el token
+            var user = await ObtenerUsuario(email);
+            if (user == null)
+            {
+                return;
+            }
+            var zvClaims = new List<Claim>()
+            {
+                new Claim("username", user!.UserName!),
+                new Claim("email", user.Email!),
+                new Claim("guid", user.Id),
+                new Claim("activo","1")
+            };
+            
+            var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
+            var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
+            var zvExpiracion = DateTime.UtcNow.AddHours(1);
+            var zvToken = new JwtSecurityToken(issuer: null, audience: null, claims: zvClaims,
+                expires: zvExpiracion, signingCredentials: zvCreds);
+            var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
+
+            var appUrl = _cfg["baseUrl"] + "on-boarding";
+
+            var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
+
+            var subject = "Recuperación de contraseña";
+            var html = $@"
+                <h2>Hola {email} 👋</h2>
+                <p>Has da click aqúi para restablecer tu contraseña:</p>
+                <p>
+                    <a href=""{link}"" 
+                       style=""display:inline-block;
+                              padding:12px 18px;
+                              background:#4F46E5;
+                              color:#fff;
+                              text-decoration:none;
+                              border-radius:8px;
+                              font-weight:bold;"">
+                        Comenzar tour 🚀
+                    </a>
+                </p>";
+
+            var from = _cfg["Graph:FromEmail"];
+
+            await _email.EnviarHtml(from, email, subject, html, ct);
+
+            return;
+
+        }
+
+        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var usuario = await _UserManager.FindByEmailAsync(objeto.Email);
+            if (usuario == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "No se encontró el usuario";
+                return respuesta;
+            }
+            var cambio = await _UserManager.ChangePasswordAsync(usuario, objeto.ContrasenaActual, objeto.NuevaContrasena);
+            respuesta.Estatus = cambio.Succeeded;
+            respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña";
             return respuesta;
         }
     }
