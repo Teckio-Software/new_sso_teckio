@@ -118,5 +118,40 @@ namespace API_SSO.Procesos
                 FechaExpiracion = zvExpiracion
             };
         }
+
+        public async Task<RespuestaDTO> AsignarRol(UsuarioRolDTO objeto)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var usuario = await _UserManager.FindByIdAsync(objeto.IdUsuario);
+            if (string.IsNullOrEmpty(usuario.Id))
+            {
+                respuesta.Descripcion = "No se encontró el usuario.";
+                respuesta.Estatus = false;
+                return respuesta;
+            }
+            var rol = await _RoleManager.FindByIdAsync(objeto.IdRol);
+            if (string.IsNullOrEmpty(rol.Id))
+            {
+                respuesta.Descripcion = "No se encontró el usuario.";
+                respuesta.Estatus = false;
+                return respuesta;
+            }
+            //Le quita el rol actual
+            var rolActual = await _UserManager.GetRolesAsync(usuario);
+            await _UserManager.RemoveFromRolesAsync(usuario, rolActual);
+            //Agrega el rol actual
+            var asignacion = await _UserManager.AddToRoleAsync(usuario, rol.Name);
+            if (asignacion.Succeeded)
+            {
+                respuesta.Estatus = true;
+                respuesta.Descripcion = "Rol asignado exitosamente.";
+            }
+            else
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ocurrió un problema al intentar asignar el rol.";
+            }
+            return respuesta;
+        }
     }
 }

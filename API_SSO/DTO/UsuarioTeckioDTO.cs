@@ -29,4 +29,10 @@ namespace API_SSO.DTO
         [Required]
         public string Password { get; set; }
     }
+
+    public class UsuarioRolDTO
+    {
+        public string IdUsuario { get; set; }
+        public string IdRol { get; set; }
+    }
 }

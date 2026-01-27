@@ -27,6 +27,12 @@ namespace API_SSO.Controllers
             return await _usuarioProceso.Login(credenciales);
         }
 
+        [HttpPost("asignarRol")]
+        public async Task<ActionResult<RespuestaDTO>> AsignarRol(UsuarioRolDTO rol)
+        {
+            var resultado = await _usuarioProceso.AsignarRol(rol);
+            return resultado;
+        }
         
     }
 }
