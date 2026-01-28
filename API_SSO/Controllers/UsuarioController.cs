@@ -61,14 +61,14 @@ namespace API_SSO.Controllers
             return resultado;
         }
 
-        public record ValidateResetTokenRequest(string UserId, string Token);
+        public record ValidateResetTokenRequest(string Token);
 
         [HttpPost]
         [Route("validate-token")]
         [AllowAnonymous]
         public async Task<IActionResult> ValidarToken([FromBody] ValidateResetTokenRequest req)
         {
-            var resultado = await _usuarioProceso.ValidarToken(req.UserId, req.Token);
+            var resultado = await _usuarioProceso.ValidarToken(req.Token);
             return Ok(new {ok =  resultado});
         }
 

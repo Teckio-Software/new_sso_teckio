@@ -294,7 +294,7 @@ namespace API_SSO.Procesos
             return respuesta;
         }
 
-        public async Task<bool> ValidarToken(string UserId, string Token)
+        public async Task<bool> ValidarToken(string Token)
         {
             //var handler = new JwtSecurityTokenHandler();
 
@@ -313,13 +313,19 @@ namespace API_SSO.Procesos
             //DateTime fechaExp = DateTimeOffset.FromUnixTimeSeconds(expClaim.Value).UtcDateTime;
 
             //return !(DateTime.UtcNow >= fechaExp);
-            var user = await _UserManager.FindByIdAsync(UserId);
+            var handler = new JwtSecurityTokenHandler();
 
+            if (!handler.CanReadToken(Token))
+                return false;
+            var token = handler.ReadJwtToken(Token);
+            var email = token.Claims.FirstOrDefault(c=>c.Type=="email");
+            if (email == null)
+            {
+                return false;
+            }
+            var user = await _UserManager.FindByEmailAsync(email.Value);
             if (user == null) return false;
-
-
             string decodedToken;
-
             try
             {
                 var tokenBytes = WebEncoders.Base64UrlDecode(Token);
@@ -329,9 +335,7 @@ namespace API_SSO.Procesos
             {
                 return false;
             }
-
             var isValid = await _UserManager.VerifyUserTokenAsync(user, _UserManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", decodedToken);
-
             return isValid;
         }
     }
