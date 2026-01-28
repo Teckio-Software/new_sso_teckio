@@ -194,7 +194,7 @@ namespace API_SSO.Procesos
                 expires: zvExpiracion, signingCredentials: zvCreds);
             var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
 
-            var appUrl = _cfg["baseUrl"] + "reset-pasword";
+            var appUrl = _cfg["baseUrl"] + "reset-password";
 
             var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
 
@@ -216,7 +216,7 @@ namespace API_SSO.Procesos
                 </p>";
 
             var from = _cfg["Graph:FromEmail"];
-
+            
             await _email.EnviarHtml(from, email, subject, html, ct);
 
             return;
