@@ -2,6 +2,8 @@
 using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Graph.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -290,6 +292,47 @@ namespace API_SSO.Procesos
             respuesta.Estatus = cambio.Succeeded;
             respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña.";
             return respuesta;
+        }
+
+        public async Task<bool> ValidarToken(string UserId, string Token)
+        {
+            //var handler = new JwtSecurityTokenHandler();
+
+            //if (!handler.CanReadToken(jwt))
+            //    throw new ArgumentException("Formato de token inválido.");
+
+            //var token = handler.ReadJwtToken(jwt);
+
+            //// 'exp' es la fecha de expiración en segundos desde 1970-01-01 UTC
+            //var expClaim = token.Payload.Exp;
+
+            //if (expClaim == null)
+            //    throw new InvalidOperationException("El token no contiene fecha de expiración.");
+
+            //// Convertir a DateTime UTC
+            //DateTime fechaExp = DateTimeOffset.FromUnixTimeSeconds(expClaim.Value).UtcDateTime;
+
+            //return !(DateTime.UtcNow >= fechaExp);
+            var user = await _UserManager.FindByIdAsync(UserId);
+
+            if (user == null) return false;
+
+
+            string decodedToken;
+
+            try
+            {
+                var tokenBytes = WebEncoders.Base64UrlDecode(Token);
+                decodedToken = System.Text.Encoding.UTF8.GetString(tokenBytes);
+            }
+            catch
+            {
+                return false;
+            }
+
+            var isValid = await _UserManager.VerifyUserTokenAsync(user, _UserManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", decodedToken);
+
+            return isValid;
         }
     }
 }
