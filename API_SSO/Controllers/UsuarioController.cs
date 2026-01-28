@@ -54,9 +54,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<RespuestaDTO>> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
         {
-            var email = User.FindFirst("email")?.Value;
-            objeto.Email = email;
-            var resultado = await _usuarioProceso.RestablecerContrasena(objeto);
+            var authen = HttpContext.User;
+            var resultado = await _usuarioProceso.RestablecerContrasena(objeto, authen.Claims.ToList());
             return resultado;
         }
 

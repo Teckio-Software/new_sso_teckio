@@ -169,13 +169,15 @@ namespace API_SSO.Procesos
             {
                 return;
             }
+            var hashContrasena = await _UserManager.GeneratePasswordResetTokenAsync(user);
             var zvClaims = new List<Claim>()
             {
                 new Claim("username", user!.UserName!),
                 new Claim("email", user.Email!),
                 new Claim("guid", user.Id),
-                new Claim("activo","1")
+                new Claim("hash", hashContrasena)
             };
+
             
             var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
             var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
@@ -213,19 +215,34 @@ namespace API_SSO.Procesos
 
         }
 
-        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
+        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto, List<System.Security.Claims.Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var email = claims.Where(z => z.Type == "email").ToList();
+            if (email.Count <= 0)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "La información del token es incorrecta.";
+                return respuesta;
+            }
+            objeto.Email = email[0].Value;
             var usuario = await _UserManager.FindByEmailAsync(objeto.Email);
+            var hashContrasena = claims.Where(z => z.Type == "hash").ToList();
             if (usuario == null)
             {
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "No se encontró el usuario";
+                respuesta.Descripcion = "No se encontró el usuario.";
                 return respuesta;
             }
-            var cambio = await _UserManager.ChangePasswordAsync(usuario, objeto.ContrasenaActual, objeto.NuevaContrasena);
+            if (hashContrasena.Count<=0)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "La información del token es incorrecta.";
+                return respuesta;
+            }
+            var cambio = await _UserManager.ResetPasswordAsync(usuario, hashContrasena[0].Value, objeto.NuevaContrasena);
             respuesta.Estatus = cambio.Succeeded;
-            respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña";
+            respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña.";
             return respuesta;
         }
     }
