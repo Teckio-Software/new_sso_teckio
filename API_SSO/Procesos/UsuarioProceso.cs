@@ -95,7 +95,8 @@ namespace API_SSO.Procesos
             foreach (var item in roles)
             {
                 var rol = await _RoleManager.FindByNameAsync(item);
-                if(rol == null)
+                zvClaims.Add(new Claim("rol", rol.Name));
+                if (rol == null)
                 {
                     continue;
                 }
