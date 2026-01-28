@@ -194,7 +194,7 @@ namespace API_SSO.Procesos
                 expires: zvExpiracion, signingCredentials: zvCreds);
             var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
 
-            var appUrl = _cfg["baseUrl"] + "on-boarding";
+            var appUrl = _cfg["baseUrl"] + "reset-pasword";
 
             var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
 
