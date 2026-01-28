@@ -38,15 +38,16 @@ namespace API_SSO.Controllers
         public record EnviarEmailRecuperacionDTO(string Email);
 
         [HttpPost("enviarEmailRecuperacion")]
-        public async Task<ActionResult> EnviarEmailRecuperacion([FromBody] EnviarEmailRecuperacionDTO enviarEmailRecuperacionDTO, CancellationToken ct)
+        public async Task EnviarEmailRecuperacion([FromBody] EnviarEmailRecuperacionDTO enviarEmailRecuperacionDTO, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(enviarEmailRecuperacionDTO.Email))
             {
-                return BadRequest(new { ok = false, message = "Email requerido" });
+                //return BadRequest(new { ok = false, message = "Email requerido" });
+                return;
             }
 
-            var id = _usuarioProceso.EnviarEmailRecuperacion(enviarEmailRecuperacionDTO.Email, ct);
-            return Ok(new { ok = true, invitationId = id });
+            await _usuarioProceso.EnviarEmailRecuperacion(enviarEmailRecuperacionDTO.Email, ct);
+            return;
         }
 
 
@@ -54,8 +55,9 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<RespuestaDTO>> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
         {
+            var authHeader = Request.Headers["Authorization"].ToString();
             var authen = HttpContext.User;
-            var resultado = await _usuarioProceso.RestablecerContrasena(objeto, authen.Claims.ToList());
+            var resultado = await _usuarioProceso.RestablecerContrasena(objeto, authen.Claims.ToList(), authHeader);
             return resultado;
         }
 

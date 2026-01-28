@@ -2,6 +2,7 @@
 using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Graph.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -34,6 +35,10 @@ namespace API_SSO.Procesos
             if (user == null)
             {
                 user = await _UserManager.FindByNameAsync(parametro);
+            }
+            if(user == null)
+            {
+                return new IdentityUser();
             }
             return user;
         }
@@ -164,7 +169,8 @@ namespace API_SSO.Procesos
         public async Task EnviarEmailRecuperacion(string email, CancellationToken ct)
         {
             //Crea el token
-            var user = await ObtenerUsuario(email);
+            //var user = await ObtenerUsuario(email);
+            var user = await _UserManager.FindByEmailAsync(email);
             if (user == null)
             {
                 return;
@@ -215,9 +221,49 @@ namespace API_SSO.Procesos
 
         }
 
-        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto, List<System.Security.Claims.Claim> claims)
+        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto, List<System.Security.Claims.Claim> claims, string JWT)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            if (string.IsNullOrWhiteSpace(JWT) || !JWT.StartsWith("Bearer "))
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Token no encontrado o formato inválido.";
+                return respuesta;
+            }
+
+            // Extraer el token como string
+            var tokenString = JWT.Substring("Bearer ".Length).Trim();
+
+            var handler = new JwtSecurityTokenHandler();
+
+            if (!handler.CanReadToken(tokenString))
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Formato de token inválido.";
+                return respuesta;
+            }
+
+            var token = handler.ReadJwtToken(tokenString);
+
+            // 'exp' es la fecha de expiración en segundos desde 1970-01-01 UTC
+            var expClaim = token.Payload.Exp;
+
+            if (expClaim == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "El token no contiene fecha de expiración.";
+            }
+
+            // Convertir a DateTime UTC
+            DateTime fechaExp = DateTimeOffset.FromUnixTimeSeconds(expClaim.Value).UtcDateTime;
+
+            if( DateTime.UtcNow >= fechaExp)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "El token ha expirado.";
+                return respuesta;
+            }
+
             var email = claims.Where(z => z.Type == "email").ToList();
             if (email.Count <= 0)
             {
