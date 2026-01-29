@@ -139,7 +139,7 @@ namespace API_SSO.Procesos
                 roles.Add(new RolCreacionDTO
                 {
                     Id = rolCreado.Id,
-                    Nombre = (rol.Nombre+"-"+rol.Id)
+                    Nombre = (rol.Nombre+"-"+rol.IdEmpresa)
                 });
             }
             //Crea los usuarios invitados
