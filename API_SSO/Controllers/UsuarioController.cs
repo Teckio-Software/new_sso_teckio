@@ -38,38 +38,41 @@ namespace API_SSO.Controllers
         public record EnviarEmailRecuperacionDTO(string Email);
 
         [HttpPost("enviarEmailRecuperacion")]
-        public async Task EnviarEmailRecuperacion([FromBody] EnviarEmailRecuperacionDTO enviarEmailRecuperacionDTO, CancellationToken ct)
+        [AllowAnonymous]
+        public async Task<IActionResult> EnviarEmailRecuperacion([FromBody] EnviarEmailRecuperacionDTO enviarEmailRecuperacionDTO, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(enviarEmailRecuperacionDTO.Email))
             {
-                //return BadRequest(new { ok = false, message = "Email requerido" });
-                return;
+                return BadRequest(new { ok = false, message = "Email requerido" });
             }
 
             await _usuarioProceso.EnviarEmailRecuperacion(enviarEmailRecuperacionDTO.Email, ct);
-            return;
+            return Ok(new { ok = true });
         }
 
 
         [HttpPost("restablecerContrasena")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<ActionResult<RespuestaDTO>> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
         {
-            var authHeader = Request.Headers["Authorization"].ToString();
-            var authen = HttpContext.User;
-            var resultado = await _usuarioProceso.RestablecerContrasena(objeto, authen.Claims.ToList(), authHeader);
+            var resultado = await _usuarioProceso.RestablecerContrasena(objeto);
             return resultado;
         }
 
-        public record ValidateResetTokenRequest(string Token);
+        public record ValidateResetTokenRequest(string Email, string Token);
 
         [HttpPost]
         [Route("validate-token")]
         [AllowAnonymous]
         public async Task<IActionResult> ValidarToken([FromBody] ValidateResetTokenRequest req)
         {
-            var resultado = await _usuarioProceso.ValidarToken(req.Token);
-            return Ok(new {ok =  resultado});
+            if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Token))
+            {
+                return BadRequest(new { ok = false, message = "Email y token requeridos" });
+            }
+
+            var resultado = await _usuarioProceso.ValidarToken(req.Email, req.Token);
+            return Ok(new { ok = resultado });
         }
 
     }

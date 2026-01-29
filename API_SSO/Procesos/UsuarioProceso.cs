@@ -168,38 +168,22 @@ namespace API_SSO.Procesos
 
         public async Task EnviarEmailRecuperacion(string email, CancellationToken ct)
         {
-            //Crea el token
-            //var user = await ObtenerUsuario(email);
             var user = await _UserManager.FindByEmailAsync(email);
             if (user == null)
             {
                 return;
             }
-            var hashContrasena = await _UserManager.GeneratePasswordResetTokenAsync(user);
-            var zvClaims = new List<Claim>()
-            {
-                new Claim("username", user!.UserName!),
-                new Claim("email", user.Email!),
-                new Claim("guid", user.Id),
-                new Claim("hash", hashContrasena)
-            };
 
-            
-            var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
-            var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
-            var zvExpiracion = DateTime.UtcNow.AddHours(1);
-            var zvToken = new JwtSecurityToken(issuer: null, audience: null, claims: zvClaims,
-                expires: zvExpiracion, signingCredentials: zvCreds);
-            var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
+            var resetToken = await _UserManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
 
-            var appUrl = _Configuracion["baseUrl"] + "reset-password";
-
-            var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
+            var appUrl = _cfg["baseUrl"] + "reset-password";
+            var link = $"{appUrl}?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
 
             var subject = "Recuperación de contraseña";
             var html = $@"
                 <h2>Hola {email} 👋</h2>
-                <p>Has da click aqúi para restablecer tu contraseña:</p>
+                <p>Haz clic aquí para restablecer tu contraseña:</p>
                 <p>
                     <a href=""{link}"" 
                        style=""display:inline-block;
@@ -209,132 +193,83 @@ namespace API_SSO.Procesos
                               text-decoration:none;
                               border-radius:8px;
                               font-weight:bold;"">
-                        Comenzar tour 🚀
+                        Restablecer contraseña
                     </a>
                 </p>";
 
             var from = _Configuracion["Graph:FromEmail"];
             
             await _email.EnviarHtml(from, email, subject, html, ct);
-
-            return;
-
         }
 
-        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto, List<System.Security.Claims.Claim> claims, string JWT)
+        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
-            if (string.IsNullOrWhiteSpace(JWT) || !JWT.StartsWith("Bearer "))
+            if (string.IsNullOrWhiteSpace(objeto.Email) || string.IsNullOrWhiteSpace(objeto.Token))
             {
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "Token no encontrado o formato inválido.";
+                respuesta.Descripcion = "Email y token son requeridos.";
                 return respuesta;
             }
 
-            // Extraer el token como string
-            var tokenString = JWT.Substring("Bearer ".Length).Trim();
-
-            var handler = new JwtSecurityTokenHandler();
-
-            if (!handler.CanReadToken(tokenString))
+            if (string.IsNullOrWhiteSpace(objeto.NuevaContrasena))
             {
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "Formato de token inválido.";
+                respuesta.Descripcion = "La contraseña es requerida.";
                 return respuesta;
             }
 
-            var token = handler.ReadJwtToken(tokenString);
-
-            // 'exp' es la fecha de expiración en segundos desde 1970-01-01 UTC
-            var expClaim = token.Payload.Exp;
-
-            if (expClaim == null)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "El token no contiene fecha de expiración.";
-            }
-
-            // Convertir a DateTime UTC
-            DateTime fechaExp = DateTimeOffset.FromUnixTimeSeconds(expClaim.Value).UtcDateTime;
-
-            if( DateTime.UtcNow >= fechaExp)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "El token ha expirado.";
-                return respuesta;
-            }
-
-            var email = claims.Where(z => z.Type == "email").ToList();
-            if (email.Count <= 0)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "La información del token es incorrecta.";
-                return respuesta;
-            }
-            objeto.Email = email[0].Value;
             var usuario = await _UserManager.FindByEmailAsync(objeto.Email);
-            var hashContrasena = claims.Where(z => z.Type == "hash").ToList();
             if (usuario == null)
             {
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "No se encontró el usuario.";
+                respuesta.Descripcion = "Token inválido o expirado.";
                 return respuesta;
             }
-            if (hashContrasena.Count<=0)
+
+            string decodedToken;
+            try
+            {
+                var tokenBytes = WebEncoders.Base64UrlDecode(objeto.Token);
+                decodedToken = Encoding.UTF8.GetString(tokenBytes);
+            }
+            catch
             {
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "La información del token es incorrecta.";
+                respuesta.Descripcion = "Token inválido o expirado.";
                 return respuesta;
             }
-            var cambio = await _UserManager.ResetPasswordAsync(usuario, hashContrasena[0].Value, objeto.NuevaContrasena);
+
+            var cambio = await _UserManager.ResetPasswordAsync(usuario, decodedToken, objeto.NuevaContrasena);
             respuesta.Estatus = cambio.Succeeded;
             respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña.";
             return respuesta;
         }
 
-        public async Task<bool> ValidarToken(string Token)
+        public async Task<bool> ValidarToken(string email, string token)
         {
-            //var handler = new JwtSecurityTokenHandler();
-
-            //if (!handler.CanReadToken(jwt))
-            //    throw new ArgumentException("Formato de token inválido.");
-
-            //var token = handler.ReadJwtToken(jwt);
-
-            //// 'exp' es la fecha de expiración en segundos desde 1970-01-01 UTC
-            //var expClaim = token.Payload.Exp;
-
-            //if (expClaim == null)
-            //    throw new InvalidOperationException("El token no contiene fecha de expiración.");
-
-            //// Convertir a DateTime UTC
-            //DateTime fechaExp = DateTimeOffset.FromUnixTimeSeconds(expClaim.Value).UtcDateTime;
-
-            //return !(DateTime.UtcNow >= fechaExp);
-            var handler = new JwtSecurityTokenHandler();
-
-            if (!handler.CanReadToken(Token))
-                return false;
-            var token = handler.ReadJwtToken(Token);
-            var email = token.Claims.FirstOrDefault(c=>c.Type=="email");
-            if (email == null)
+            var user = await _UserManager.FindByEmailAsync(email);
+            if (user == null)
             {
                 return false;
             }
-            var user = await _UserManager.FindByEmailAsync(email.Value);
-            if (user == null) return false;
+
             string decodedToken;
             try
             {
-                var tokenBytes = WebEncoders.Base64UrlDecode(Token);
-                decodedToken = System.Text.Encoding.UTF8.GetString(tokenBytes);
+                var tokenBytes = WebEncoders.Base64UrlDecode(token);
+                decodedToken = Encoding.UTF8.GetString(tokenBytes);
             }
             catch
             {
                 return false;
             }
-            var isValid = await _UserManager.VerifyUserTokenAsync(user, _UserManager.Options.Tokens.PasswordResetTokenProvider, "ResetPassword", decodedToken);
-            return isValid;
+
+            return await _UserManager.VerifyUserTokenAsync(
+                user,
+                _UserManager.Options.Tokens.PasswordResetTokenProvider,
+                "ResetPassword",
+                decodedToken);
         }
     }
 }
