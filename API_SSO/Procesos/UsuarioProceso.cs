@@ -177,7 +177,7 @@ namespace API_SSO.Procesos
             var resetToken = await _UserManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
 
-            var appUrl = _cfg["baseUrl"] + "reset-password";
+            var appUrl = _Configuracion["baseUrl"] + "reset-password";
             var link = $"{appUrl}?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
 
             var subject = "Recuperación de contraseña";
