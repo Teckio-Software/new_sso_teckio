@@ -20,6 +20,7 @@ namespace API_SSO.Utilidades
             services.AddScoped(typeof(UsuarioProceso));
             services.AddScoped(typeof(EmpresaProceso));
             services.AddScoped(typeof(ComprobantePagoProceso));
+            services.AddScoped(typeof(CatalogoPermisosProcess));
             //API_SSO
             services.AddScoped(typeof(IClienteService<>),typeof(ClienteService<>));
             services.AddScoped(typeof(IComprobantePagoService<>),typeof(ComprobantePagoService<>));
@@ -31,6 +32,8 @@ namespace API_SSO.Utilidades
             services.AddScoped(typeof(IRolService<>),typeof(RolService<>));
             services.AddScoped(typeof(IInvitacionService), typeof(InvitacionService));
             services.AddScoped(typeof(ITokenInvitateService), typeof(TokenInvitateService));
+            services.AddScoped(typeof(ICatalogoSeccionService<>), typeof(CatalogoSeccionService<>));
+            services.AddScoped(typeof(ICatalogoClaimService<>), typeof(CatalogoClaimService<>));
 
             // Storage (S3)
             services.AddScoped<IStorageService, S3StorageService>();

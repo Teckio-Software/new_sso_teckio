@@ -76,6 +76,16 @@ namespace API_SSO.Utilidades
 
             #endregion
 
+            #region CatalogoPermisos
+
+            CreateMap<CatalogoClaim,  CatalogoClaimDTO>();
+            CreateMap<CatalogoClaimDTO,  CatalogoClaim>();
+
+            CreateMap<CatalogoSeccion, CatalogoSeccionDTO>();
+            CreateMap<CatalogoSeccionDTO, CatalogoSeccion>();
+
+            #endregion
+
         }
     }
 }
