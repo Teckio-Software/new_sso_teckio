@@ -2,7 +2,10 @@
 using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Graph.Models;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace API_SSO.Servicios
 {

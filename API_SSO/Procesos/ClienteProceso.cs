@@ -4,7 +4,12 @@ using API_SSO.DTOs;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Graph.Models;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection.Metadata;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -19,8 +24,10 @@ namespace API_SSO.Procesos
         private readonly ComprobantePagoProceso _comprobantePago;
         private readonly IClienteService<SSOContext> _clienteService;
         private readonly SSOContext _dbContext;
+        private readonly IConfiguration _Configuracion;
+        private readonly IEmailService _email;
 
-        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService, SSOContext dbContext)
+        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService, SSOContext dbContext, IConfiguration configuracion, IEmailService email)
         {
             _UsuarioManager = usuarioManager;
             _EmpresaService = empresaService;
@@ -29,9 +36,11 @@ namespace API_SSO.Procesos
             _comprobantePago = comprobantePago;
             _clienteService = clienteService;
             _dbContext = dbContext;
+            _Configuracion = configuracion;
+            _email = email;
         }
 
-        public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion)
+        public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion, CancellationToken ct)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             //Primero verifica que el correo, nombre y contraseña no estén vacíos
@@ -141,12 +150,19 @@ namespace API_SSO.Procesos
                     Email = usuario.correoInvitado,
                     UserName = usuario.nombreInvitado
                 };
-                await _UsuarioManager.CreateAsync(invitado);
+                var resultInvitado = await _UsuarioManager.CreateAsync(invitado);
+
                 //Asigna el rol al usuario
-                var invitadoObtenido = await _UsuarioManager.FindByEmailAsync(usuario.correoInvitado);
-                if (invitadoObtenido != null)
+                //var invitadoObtenido = await _UsuarioManager.FindByEmailAsync(usuario.correoInvitado);
+                //if (invitadoObtenido != null)
+                if (resultInvitado.Succeeded)
                 {
-                    await _UsuarioManager.AddToRoleAsync(invitadoObtenido, roles[usuario.rolInvitado].Nombre);
+                    if (roles[usuario.rolInvitado] != null)
+                    {
+                        await _UsuarioManager.AddToRoleAsync(invitado, roles[usuario.rolInvitado].Nombre);
+                    }
+                    var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
+                    await InvitarOperativo(invitado, token, ct);
                 }
             }
             return respuesta;
@@ -227,6 +243,52 @@ namespace API_SSO.Procesos
             string json = string.Join("", lista);
             var datos = JsonSerializer.Deserialize<List<ClienteDTO>>(json);
             return datos;
+        }
+
+        public async Task InvitarOperativo(IdentityUser user, string hashContrasena, CancellationToken ct)
+        {
+            var zvClaims = new List<Claim>()
+            {
+                new Claim("username", user!.UserName!),
+                new Claim("email", user.Email!),
+                new Claim("guid", user.Id),
+                new Claim("hash", hashContrasena)
+            };
+
+
+            var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
+            var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
+            var zvExpiracion = DateTime.UtcNow.AddHours(8);
+            var zvToken = new JwtSecurityToken(issuer: null, audience: null, claims: zvClaims,
+                expires: zvExpiracion, signingCredentials: zvCreds);
+            var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
+
+            var appUrl = _Configuracion["baseUrl"] + "reset-password";
+
+            var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
+
+            var subject = "Bienvenido operativo";
+            var html = $@"
+                <h2>Hola {user.Email} 👋</h2>
+                <p>Has da click aqúi para crear tu contraseña:</p>
+                <p>
+                    <a href=""{link}"" 
+                       style=""display:inline-block;
+                              padding:12px 18px;
+                              background:#4F46E5;
+                              color:#fff;
+                              text-decoration:none;
+                              border-radius:8px;
+                              font-weight:bold;"">
+                        Comenzar tour 🚀
+                    </a>
+                </p>";
+
+            var from = _Configuracion["Graph:FromEmail"];
+
+            await _email.EnviarHtml(from, user.Email, subject, html, ct);
+
+            return;
         }
     }
 }

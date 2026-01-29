@@ -18,16 +18,14 @@ namespace API_SSO.Procesos
         private readonly RoleManager<IdentityRole> _RoleManager;
         private readonly SignInManager<IdentityUser> _SignInManager;
         private readonly IConfiguration _Configuracion;
-        private readonly IConfiguration _cfg;
         private readonly IEmailService _email;
 
-        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IConfiguration cfg, IEmailService emailService)
+        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IEmailService emailService)
         {
             _UserManager = userManager;
             _SignInManager = signInManager;
             _Configuracion = configuracion;
             _RoleManager = roleManager;
-            _cfg = cfg;
             _email = emailService;
         }
 
@@ -194,7 +192,7 @@ namespace API_SSO.Procesos
                 expires: zvExpiracion, signingCredentials: zvCreds);
             var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
 
-            var appUrl = _cfg["baseUrl"] + "reset-password";
+            var appUrl = _Configuracion["baseUrl"] + "reset-password";
 
             var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
 
@@ -215,7 +213,7 @@ namespace API_SSO.Procesos
                     </a>
                 </p>";
 
-            var from = _cfg["Graph:FromEmail"];
+            var from = _Configuracion["Graph:FromEmail"];
             
             await _email.EnviarHtml(from, email, subject, html, ct);
 

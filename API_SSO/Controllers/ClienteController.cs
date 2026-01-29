@@ -17,9 +17,9 @@ namespace API_SSO.Controllers
         }
         
         [HttpPost("CrearUsuario")]
-        public async Task<ActionResult<RespuestaDTO>> CrearUsuario(ClienteCreacionDTO cliente)
+        public async Task<ActionResult<RespuestaDTO>> CrearUsuario(ClienteCreacionDTO cliente, CancellationToken ct)
         {
-            var respuesta = await _proceso.CrearUsuario(cliente);
+            var respuesta = await _proceso.CrearUsuario(cliente, ct);
             return respuesta;
         }
 
