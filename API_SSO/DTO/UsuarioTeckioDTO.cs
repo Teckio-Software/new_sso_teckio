@@ -39,6 +39,7 @@ namespace API_SSO.DTO
     public class RecuperacionContrasenaDTO
     {
         public string Email { get; set; }
+        public string Token { get; set; }
         public string NuevaContrasena { get; set; }
     }
 }
