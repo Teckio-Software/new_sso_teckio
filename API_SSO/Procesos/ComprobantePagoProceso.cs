@@ -2,6 +2,7 @@
 using API_SSO.DTO;
 using API_SSO.Servicios;
 using API_SSO.Servicios.Contratos;
+using Microsoft.AspNetCore.Identity;
 
 namespace API_SSO.Procesos
 {
@@ -12,28 +13,41 @@ namespace API_SSO.Procesos
         private readonly IInvitacionService _invitacionService;
         private readonly IClienteService<SSOContext> _clienteService;
         private readonly IStorageService _storageService;
+        private readonly UserManager<IdentityUser> _UserManager;
 
-        public ComprobantePagoProceso(IComprobantePagoService<SSOContext> comprobanteservice, IConfiguration configuracion, IInvitacionService invitacionService, IClienteService<SSOContext> clienteService, IStorageService storageService)
+        public ComprobantePagoProceso(IComprobantePagoService<SSOContext> comprobanteservice, IConfiguration configuracion, IInvitacionService invitacionService, IClienteService<SSOContext> clienteService, IStorageService storageService, UserManager<IdentityUser> userManager)
         {
             _Comprobanteservice = comprobanteservice;
             _configuracion = configuracion;
             _invitacionService = invitacionService;
             _clienteService = clienteService;
             _storageService = storageService;
+            _UserManager = userManager;
+
         }
 
         public async Task<RespuestaDTO> SubirComprobante(IFormFile archivo, int idCliente, List<System.Security.Claims.Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
-            var IdUsStr = claims.Where(z => z.Type == "idUsuario").ToList();
-            if (IdUsStr[0].Value == null)
+            var userEmail = claims.FirstOrDefault(z => z.Type == "email");
+            
+            if (userEmail == null)  
             {
                 respuesta.Descripcion = "Los datos del usuario están incompletos.";
                 respuesta.Estatus = false;
                 return respuesta;
             }
 
-            if(archivo == null)
+            var user = await _UserManager.FindByEmailAsync(userEmail.Value);
+
+            if(user == null)
+            {
+                respuesta.Descripcion = "No se encontró al usuario.";
+                respuesta.Estatus = false;
+                return respuesta;
+            }
+
+            if (archivo == null)
             {
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "No se encontró el archivo que se va a publicar";
@@ -63,7 +77,7 @@ namespace API_SSO.Procesos
             ComprobantePagoDTO comprobante = new ComprobantePagoDTO
             {
                 IdCliente = idCliente,
-                UserId = IdUsStr[0].Value,
+                UserId = user.Id,
                 Ruta = s3Url,
                 Estatus =0, //Capturado
                 FechaCarga = DateTime.Now,
