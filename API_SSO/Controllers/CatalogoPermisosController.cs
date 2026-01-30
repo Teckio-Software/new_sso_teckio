@@ -16,7 +16,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpGet("todos")]
-        public async Task<ActionResult<List<CatalogoPermisosDTO>>> Todos()
+        public async Task<ActionResult<List<CatalogoPermisoMenuDTO>>> Todos()
         {
             var lista = await _process.ObtenerTodos();
             return lista;

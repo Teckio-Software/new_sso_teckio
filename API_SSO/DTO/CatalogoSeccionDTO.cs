@@ -10,5 +10,7 @@ namespace API_SSO.DTO
 
         public string? Descripcion { get; set; }
 
+        public int? IdMenu { get; set; }
+
     }
 }

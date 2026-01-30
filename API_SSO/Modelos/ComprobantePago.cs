@@ -21,6 +21,10 @@ public partial class ComprobantePago
 
     public bool? Eliminado { get; set; }
 
+    public int? IdEmpresa { get; set; }
+
     public virtual Cliente IdClienteNavigation { get; set; } = null!;
+
+    public virtual Empresa? IdEmpresaNavigation { get; set; }
 
 }

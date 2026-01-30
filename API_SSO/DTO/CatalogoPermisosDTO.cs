@@ -6,4 +6,9 @@ namespace API_SSO.DTO
     {
         public List<CatalogoClaimDTO> Claims {  get; set; } = new List<CatalogoClaimDTO>();
     }
+
+    public class CatalogoPermisoMenuDTO: CatalogoMenuDTO
+    {
+        public List<CatalogoPermisosDTO> Secciones { get; set; } = new List<CatalogoPermisosDTO>();
+    }
 }

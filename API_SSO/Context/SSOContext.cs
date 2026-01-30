@@ -20,6 +20,8 @@ namespace API_SSO.Context
 
         public virtual DbSet<CatalogoClaim> CatalogoClaims { get; set; }
 
+        public virtual DbSet<CatalogoMenu> CatalogoMenus { get; set; }
+
         public virtual DbSet<CatalogoSeccion> CatalogoSeccions { get; set; }
         public virtual DbSet<Cliente> Clientes { get; set; }
 
@@ -66,6 +68,15 @@ namespace API_SSO.Context
                     .HasConstraintName("FK__CatalogoC__IdSec__2180FB33");
             });
 
+            modelBuilder.Entity<CatalogoMenu>(entity =>
+            {
+                entity.HasKey(e => e.Id).HasName("PK__Catalogo__3214EC072E6CE9B6");
+
+                entity.ToTable("CatalogoMenu");
+
+                entity.Property(e => e.Nombre).HasMaxLength(100);
+            });
+
             modelBuilder.Entity<CatalogoSeccion>(entity =>
             {
                 entity.HasKey(e => e.Id).HasName("PK__Catalogo__3214EC0732AE614E");
@@ -74,32 +85,29 @@ namespace API_SSO.Context
 
                 entity.Property(e => e.Descripcion).HasMaxLength(150);
                 entity.Property(e => e.Nombre).HasMaxLength(50);
+
+                entity.HasOne(d => d.IdMenuNavigation).WithMany(p => p.CatalogoSeccions)
+                    .HasForeignKey(d => d.IdMenu)
+                    .HasConstraintName("FK__CatalogoS__IdMen__339FAB6E");
             });
 
             modelBuilder.Entity<Cliente>(entity =>
             {
+                entity.HasKey(e => e.Id).HasName("PK__Cliente__3214EC076D9B1004");
+
                 entity.ToTable("Cliente");
 
-                entity.HasKey(e => e.Id);
-
-                // Configuración para el decimal de alta precisión
-                entity.Property(e => e.CostoXusuario)
-                    .HasColumnType("decimal(28, 6)");
-
-                // Mapeo específico para SQL 'date'
-                entity.Property(e => e.DiaPago)
-                    .HasColumnType("date");
-
-                entity.Property(e => e.Estatus)
-                    .IsRequired()
-                    .HasDefaultValueSql("((1))");
-
-                entity.Property(e => e.FechaRegistro)
-                    .IsRequired()
-                    .HasDefaultValueSql("(getdate())");
-
-                entity.Property(e => e.RazonSocial).HasMaxLength(150);
+                entity.Property(e => e.CantidadUsuariosXempresa).HasColumnName("CantidadUsuariosXEmpresa");
                 entity.Property(e => e.Correo).HasMaxLength(250);
+                entity.Property(e => e.CostoXusuario)
+                    .HasColumnType("decimal(28, 6)")
+                    .HasColumnName("CostoXUsuario");
+                entity.Property(e => e.Estatus).HasDefaultValue(true);
+                entity.Property(e => e.FechaRegistro)
+                    .HasDefaultValueSql("(getdate())")
+                    .HasColumnType("datetime");
+                entity.Property(e => e.PagoXempresa).HasColumnName("PagoXEmpresa");
+                entity.Property(e => e.RazonSocial).HasMaxLength(150);
             });
 
             modelBuilder.Entity<ComprobantePago>(entity =>
@@ -117,6 +125,10 @@ namespace API_SSO.Context
                     .HasForeignKey(d => d.IdCliente)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_ComprobantePago_Cliente");
+
+                entity.HasOne(d => d.IdEmpresaNavigation).WithMany(p => p.ComprobantePagos)
+                    .HasForeignKey(d => d.IdEmpresa)
+                    .HasConstraintName("Fk_ComprobantePagoEmpresa");
             });
 
             modelBuilder.Entity<Empresa>(entity =>
@@ -129,6 +141,9 @@ namespace API_SSO.Context
                 entity.Property(e => e.FechaRegistro).HasColumnType("datetime");
                 entity.Property(e => e.NombreComercial).HasMaxLength(200);
                 entity.Property(e => e.Rfc).HasMaxLength(13);
+                entity.Property(e => e.Sociedad)
+                    .HasMaxLength(250)
+                    .HasDefaultValue("");
             });
 
             modelBuilder.Entity<EmpresaXcliente>(entity =>

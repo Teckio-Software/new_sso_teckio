@@ -17,5 +17,7 @@
         public string? IdUsuarioAutorizador { get; set; }
 
         public bool? Eliminado { get; set; }
+
+        public int? IdEmpresa { get; set; }
     }
 }

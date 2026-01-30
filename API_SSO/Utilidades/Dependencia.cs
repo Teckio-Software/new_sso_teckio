@@ -34,6 +34,7 @@ namespace API_SSO.Utilidades
             services.AddScoped(typeof(ITokenInvitateService), typeof(TokenInvitateService));
             services.AddScoped(typeof(ICatalogoSeccionService<>), typeof(CatalogoSeccionService<>));
             services.AddScoped(typeof(ICatalogoClaimService<>), typeof(CatalogoClaimService<>));
+            services.AddScoped(typeof(ICatalogoMenuService<>), typeof(CatalogoMenuService<>));
 
             // Storage (S3)
             services.AddScoped<IStorageService, S3StorageService>();

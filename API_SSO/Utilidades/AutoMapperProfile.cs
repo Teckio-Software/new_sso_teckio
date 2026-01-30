@@ -84,6 +84,9 @@ namespace API_SSO.Utilidades
             CreateMap<CatalogoSeccion, CatalogoSeccionDTO>();
             CreateMap<CatalogoSeccionDTO, CatalogoSeccion>();
 
+            CreateMap<CatalogoMenu, CatalogoMenuDTO>();
+            CreateMap<CatalogoMenuDTO, CatalogoMenu>();
+
             #endregion
 
         }

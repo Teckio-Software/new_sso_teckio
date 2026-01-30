@@ -15,5 +15,9 @@
         public string? CodigoPostal { get; set; }
 
         public bool? Eliminado { get; set; }
+
+        public string Sociedad { get; set; } = null!;
+
+        public int? DiaPago { get; set; }
     }
 }

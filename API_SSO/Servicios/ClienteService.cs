@@ -41,12 +41,13 @@ namespace API_SSO.Servicios
                 }
                 objetoEncontrado.RazonSocial = clienteDTO.RazonSocial;
                 objetoEncontrado.Correo = clienteDTO.Correo;
-                objetoEncontrado.DiaPago = clienteDTO.DiaPago;
+                //objetoEncontrado.DiaPago = clienteDTO.DiaPago;
                 objetoEncontrado.CantidadEmpresas = clienteDTO.CantidadEmpresas;
                 objetoEncontrado.CantidadUsuariosXempresa = clienteDTO.CantidadUsuariosXempresa;
                 objetoEncontrado.CostoXusuario = clienteDTO.CostoXusuario;
                 objetoEncontrado.CorreoConfirmed = clienteDTO.CorreoConfirmed;
                 objetoEncontrado.Estatus = clienteDTO.Estatus;
+                objetoEncontrado.PagoXempresa = clienteDTO.PagoXempresa;
                 respuesta.Estatus = await _repository.Editar(objetoEncontrado);
                 respuesta.Descripcion = respuesta.Estatus ? "Cliente editado exitosamente." : "Ocurrio un error al intentar editar el cliente.";
                 return respuesta;

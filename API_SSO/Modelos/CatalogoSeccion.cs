@@ -8,6 +8,10 @@
 
         public string? Descripcion { get; set; }
 
+        public int? IdMenu { get; set; }
+
         public virtual ICollection<CatalogoClaim> CatalogoClaims { get; set; } = new List<CatalogoClaim>();
+
+        public virtual CatalogoMenu? IdMenuNavigation { get; set; }
     }
 }

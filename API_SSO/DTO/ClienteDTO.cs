@@ -10,8 +10,6 @@ namespace API_SSO.DTOs
 
         public string? Correo { get; set; }
 
-        public DateTime? DiaPago { get; set; }
-
         public int? CantidadEmpresas { get; set; }
 
         public int? CantidadUsuariosXempresa { get; set; }
@@ -21,7 +19,11 @@ namespace API_SSO.DTOs
         public bool? CorreoConfirmed { get; set; }
 
         public bool? Eliminado { get; set; }
+
         public bool Estatus { get; set; }
+
         public DateTime FechaRegistro { get; set; }
+
+        public bool PagoXempresa { get; set; }
     }
 }

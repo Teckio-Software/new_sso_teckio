@@ -20,13 +20,19 @@ public partial class Empresa
 
     public bool? Eliminado { get; set; }
 
+    public string Sociedad { get; set; } = null!;
+
+    public int? DiaPago { get; set; }
+
+    public virtual ICollection<ComprobantePago> ComprobantePagos { get; set; } = new List<ComprobantePago>();
+
     public virtual ICollection<EmpresaXcliente> EmpresaXclientes { get; set; } = new List<EmpresaXcliente>();
 
     public virtual ICollection<Log> Logs { get; set; } = new List<Log>();
 
     public virtual ICollection<ProyectoActual> ProyectoActuals { get; set; } = new List<ProyectoActual>();
 
-    public virtual ICollection<UsuarioXempresa> UsuarioXempresas { get; set; } = new List<UsuarioXempresa>();
-
     public virtual ICollection<Rol> Rols { get; set; } = new List<Rol>();
+
+    public virtual ICollection<UsuarioXempresa> UsuarioXempresas { get; set; } = new List<UsuarioXempresa>();
 }

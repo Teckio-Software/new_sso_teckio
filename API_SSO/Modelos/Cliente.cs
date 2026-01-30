@@ -12,10 +12,6 @@ public partial class Cliente
 
     public string? Correo { get; set; }
 
-    // Cambio detectado: De int a Date
-    [Column(TypeName = "date")]
-    public DateTime? DiaPago { get; set; }
-
     public int? CantidadEmpresas { get; set; }
 
     public int? CantidadUsuariosXempresa { get; set; }
@@ -29,6 +25,8 @@ public partial class Cliente
     public bool Estatus { get; set; }
 
     public DateTime FechaRegistro { get; set; }
+
+    public bool PagoXempresa { get; set; }
 
     public virtual ICollection<ComprobantePago> ComprobantePagos { get; set; } = new List<ComprobantePago>();
 

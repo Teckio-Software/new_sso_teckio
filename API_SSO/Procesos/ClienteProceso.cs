@@ -198,7 +198,6 @@ namespace API_SSO.Procesos
                 RazonSocial = informacion.RazonSocial,
 
                 Correo = informacion.Correo,
-                DiaPago = informacion.DiaPago,
                 CantidadEmpresas = informacion.CantidadEmpresas,
                 CantidadUsuariosXempresa = informacion.CantidadUsuariosXEmpresa,
                 CostoXusuario = informacion.CostoXUsuario,

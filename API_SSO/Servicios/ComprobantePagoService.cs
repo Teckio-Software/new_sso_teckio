@@ -42,6 +42,7 @@ namespace API_SSO.Servicios
                 objetoEncontrado.Ruta = comprobantePago.Ruta;
                 objetoEncontrado.Estatus = comprobantePago.Estatus;
                 objetoEncontrado.IdUsuarioAutorizador = comprobantePago.IdUsuarioAutorizador;
+                objetoEncontrado.IdEmpresa = comprobantePago.IdEmpresa;
                 respuesta.Estatus = await _repository.Editar(objetoEncontrado);
                 respuesta.Descripcion = respuesta.Estatus ? "Comprobante editado exitosamente" : "Ocurrió un error al intentar editar el comprobante de pago.";
                 return respuesta;

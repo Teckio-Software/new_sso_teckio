@@ -10,27 +10,40 @@ namespace API_SSO.Procesos
     {
         private readonly ICatalogoClaimService<SSOContext> _claimService;
         private readonly ICatalogoSeccionService<SSOContext> _seccionService;
+        private readonly ICatalogoMenuService<SSOContext> _menuService;
 
-        public CatalogoPermisosProcess(ICatalogoClaimService<SSOContext> claimService, ICatalogoSeccionService<SSOContext> seccionService)
+        public CatalogoPermisosProcess(ICatalogoClaimService<SSOContext> claimService, ICatalogoSeccionService<SSOContext> seccionService, ICatalogoMenuService<SSOContext> menuService)
         {
             _claimService = claimService;
             _seccionService = seccionService;
+            _menuService = menuService;
         }
 
-        public async Task<List<CatalogoPermisosDTO>> ObtenerTodos()
+        public async Task<List<CatalogoPermisoMenuDTO>> ObtenerTodos()
         {
-            List<CatalogoPermisosDTO> lista = new List<CatalogoPermisosDTO>();
+            List<CatalogoPermisoMenuDTO> lista = new List<CatalogoPermisoMenuDTO>();
+            var menus = await _menuService.ObtenerTodos();
             var secciones = await _seccionService.ObtenerTodos();
             var claims = await _claimService.ObtenerTodos();
-            foreach(var seccion in secciones)
+            foreach( var menu in menus)
             {
-                var claimsPorSeccion = claims.Where(c => c.IdSeccion == seccion.Id).ToList();
-                lista.Add(new CatalogoPermisosDTO
+                var sublista = new List<CatalogoPermisosDTO>();
+                var seccionesFiltradas = secciones.Where(s => s.IdMenu == menu.Id).ToList();
+                foreach (var seccion in seccionesFiltradas)
                 {
-                    Descripcion = seccion.Descripcion,
-                    Id = seccion.Id,
-                    Nombre = seccion.Nombre,
-                    Claims = claimsPorSeccion
+                    var claimsPorSeccion = claims.Where(c => c.IdSeccion == seccion.Id).ToList();
+                    sublista.Add(new CatalogoPermisosDTO
+                    {
+                        Descripcion = seccion.Descripcion,
+                        Id = seccion.Id,
+                        Nombre = seccion.Nombre,
+                        Claims = claimsPorSeccion
+                    });
+                }
+                lista.Add(new CatalogoPermisoMenuDTO
+                {
+                    Nombre = menu.Nombre,
+                    Secciones = sublista
                 });
             }
             return lista;
