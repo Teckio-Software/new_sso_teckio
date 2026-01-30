@@ -36,12 +36,14 @@ namespace API_SSO.Procesos
                     {
                         Descripcion = seccion.Descripcion,
                         Id = seccion.Id,
+                        IdMenu = seccion.IdMenu,
                         Nombre = seccion.Nombre,
                         Claims = claimsPorSeccion
                     });
                 }
                 lista.Add(new CatalogoPermisoMenuDTO
                 {
+                    Id = menu.Id,
                     Nombre = menu.Nombre,
                     Secciones = sublista
                 });
