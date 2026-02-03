@@ -26,8 +26,9 @@ namespace API_SSO.Procesos
         private readonly SSOContext _dbContext;
         private readonly IConfiguration _Configuracion;
         private readonly IEmailService _email;
+        private readonly IUsuarioxEmpresaService<SSOContext> _usuarioxEmpresaService;
 
-        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService, SSOContext dbContext, IConfiguration configuracion, IEmailService email)
+        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService, SSOContext dbContext, IConfiguration configuracion, IEmailService email, IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService)
         {
             _UsuarioManager = usuarioManager;
             _EmpresaService = empresaService;
@@ -38,6 +39,7 @@ namespace API_SSO.Procesos
             _dbContext = dbContext;
             _Configuracion = configuracion;
             _email = email;
+            _usuarioxEmpresaService = usuarioxEmpresaService;
         }
 
         public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion, CancellationToken ct)
@@ -61,7 +63,22 @@ namespace API_SSO.Procesos
             if (!respuesta2)
             {
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "Capture un correo electrónico válido";
+                respuesta.Descripcion = "Capture un correo electrónico válido.";
+                return respuesta;
+            }
+            //Valida que el usuario no este registrado todavía
+            var ExisteUsuario = await _UsuarioManager.FindByEmailAsync(clienteCreacion.CorreoElectronico);
+            if (ExisteUsuario != null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ya hay un usuario registrado con este correo.";
+                return respuesta;
+            }
+            ExisteUsuario = await _UsuarioManager.FindByNameAsync(clienteCreacion.NombreUsuario);
+            if (ExisteUsuario != null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ya hay un usuario registrado con este nombre.";
                 return respuesta;
             }
             //Crea el primer usuario
@@ -145,25 +162,34 @@ namespace API_SSO.Procesos
             //Crea los usuarios invitados
             foreach(var usuario in clienteCreacion.invitaciones)
             {
+                //Primero comprueba si ya existe un usuario con ese correo, si existe solo le asigna el rol y lo incluye en la empresa, de lo contrario crea el usuario primero
+                var existeInvitado = await _UsuarioManager.FindByEmailAsync(usuario.correoInvitado);
                 var invitado = new IdentityUser
                 {
                     Email = usuario.correoInvitado,
                     UserName = usuario.nombreInvitado
                 };
-                var resultInvitado = await _UsuarioManager.CreateAsync(invitado);
-
-                //Asigna el rol al usuario
-                //var invitadoObtenido = await _UsuarioManager.FindByEmailAsync(usuario.correoInvitado);
-                //if (invitadoObtenido != null)
-                if (resultInvitado.Succeeded)
+                if (existeInvitado == null)
                 {
-                    if (roles[usuario.rolInvitado] != null)
-                    {
-                        await _UsuarioManager.AddToRoleAsync(invitado, roles[usuario.rolInvitado].Nombre);
-                    }
-                    var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
-                    await InvitarOperativo(invitado, token, ct);
+                    var resultInvitado = await _UsuarioManager.CreateAsync(invitado);
                 }
+                else
+                {
+                    invitado = existeInvitado;
+                }
+                if (roles[usuario.rolInvitado] != null)
+                {
+                    await _UsuarioManager.AddToRoleAsync(invitado, roles[usuario.rolInvitado].Nombre);
+                }
+                var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
+                await InvitarOperativo(invitado, token, ct);
+                UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
+                {
+                    IdEmpresa = empresaCreada.Id,
+                    UserId = invitado.Id,
+                    Eliminado = false,
+                };
+                await _usuarioxEmpresaService.CrearYObtener(relacion);
             }
             return respuesta;
         }

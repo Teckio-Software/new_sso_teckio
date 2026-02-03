@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace API_SSO.Procesos
 {
@@ -270,6 +271,45 @@ namespace API_SSO.Procesos
                 _UserManager.Options.Tokens.PasswordResetTokenProvider,
                 "ResetPassword",
                 decodedToken);
+        }
+
+        public async Task<RespuestaDTO> ValidarCorreo(string email)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            //var esValido = Regex.IsMatch(email,
+            //        @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            //        RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+            //if (!esValido)
+            //{
+            //    respuesta.Estatus = false;
+            //    respuesta.Descripcion = "El correo electrónico no es válido.";
+            //    return false;
+            //}
+            var usuarioExistente = await _UserManager.FindByEmailAsync(email);
+            if(usuarioExistente == null)
+            {
+                respuesta.Estatus = true;
+                respuesta.Descripcion = "Ese correo electrónico está libre.";
+                return respuesta;
+            }
+            respuesta.Estatus = false;
+            respuesta.Descripcion = "Ya hay un usuario con ese correo.";
+            return respuesta;
+        }
+
+        public async Task<RespuestaDTO> ValidarNombreUsuario(string nombre)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var usuarioExistente = await _UserManager.FindByNameAsync(nombre);
+            if (usuarioExistente == null)
+            {
+                respuesta.Estatus = true;
+                respuesta.Descripcion = "Ese nombre de usuario está libre.";
+                return respuesta;
+            }
+            respuesta.Estatus = false;
+            respuesta.Descripcion = "Ya hay un usuario con ese nombre.";
+            return respuesta;
         }
     }
 }

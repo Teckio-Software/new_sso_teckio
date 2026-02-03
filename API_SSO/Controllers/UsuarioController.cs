@@ -75,5 +75,19 @@ namespace API_SSO.Controllers
             return Ok(new { ok = resultado });
         }
 
+        public record ValidarUseroEmail(string parametro);
+        [HttpPost("validarEmail")]
+        public async Task<ActionResult<RespuestaDTO>> ValidarCorreo(ValidarUseroEmail parametro)
+        {
+            var respuesta = await _usuarioProceso.ValidarCorreo(parametro.parametro);
+            return respuesta;
+        }
+
+        [HttpPost("validarNombreUsuario")]
+        public async Task<ActionResult<RespuestaDTO>> ValidarNombreUsuario(ValidarUseroEmail parametro)
+        {
+            var respuesta = await _usuarioProceso.ValidarNombreUsuario(parametro.parametro);
+            return respuesta;
+        }
     }
 }
