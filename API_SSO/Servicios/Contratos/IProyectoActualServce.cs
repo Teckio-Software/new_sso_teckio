@@ -7,6 +7,7 @@ namespace API_SSO.Servicios.Contratos
     {
         Task<List<ProyectoActualDTO>> ObtenerTodos();
         Task<ProyectoActualDTO> ObtenerXId(int id);
+        Task<ProyectoActualDTO> ObtenerXIdUsuario(string id);
         Task<ProyectoActualDTO> CrearYObtener(ProyectoActualDTO proyectoActual);
         Task<RespuestaDTO> Editar(ProyectoActualDTO proyectoActual);
         Task<RespuestaDTO> Eliminar(int id);

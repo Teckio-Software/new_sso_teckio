@@ -87,5 +87,11 @@ namespace API_SSO.Servicios
             var objetoEncontrado = await _repository.Obtener(p => p.Id == id && (bool)!p.Eliminado);
             return _Mapper.Map<ProyectoActualDTO>(objetoEncontrado);
         }
+
+        public async Task<ProyectoActualDTO> ObtenerXIdUsuario(string id)
+        {
+            var objetoEncontrado = await _repository.Obtener(p => p.UserId == id && (bool)!p.Eliminado);
+            return _Mapper.Map<ProyectoActualDTO>(objetoEncontrado);
+        }
     }
 }
