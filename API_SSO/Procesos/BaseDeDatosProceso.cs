@@ -56,13 +56,13 @@ namespace API_SSO.Procesos
             {
                 return false;
             }
-            using (SqlConnection conn = new SqlConnection(coneccion))
+            await using (SqlConnection conn = new SqlConnection(coneccion))
             {
-                conn.Open();
+                await conn.OpenAsync();
 
                 // 1. Verificar si la base de datos existe
                 string checkDb = "SELECT database_id FROM sys.databases WHERE name = @name";
-                using (SqlCommand cmd = new SqlCommand(checkDb, conn))
+                await using (SqlCommand cmd = new SqlCommand(checkDb, conn))
                 {
                     cmd.Parameters.AddWithValue("@name", dbName);
                     var result = cmd.ExecuteScalar();
@@ -73,7 +73,7 @@ namespace API_SSO.Procesos
                 // Cambiamos el contexto a la nueva DB
                 conn.ChangeDatabase(dbName);
                 string checkTable = "SELECT object_id FROM sys.tables WHERE name = 'Almacen'";
-                using (SqlCommand cmd = new SqlCommand(checkTable, conn))
+                await using (SqlCommand cmd = new SqlCommand(checkTable, conn))
                 {
                     var result = cmd.ExecuteScalar();
                     return result != null;
