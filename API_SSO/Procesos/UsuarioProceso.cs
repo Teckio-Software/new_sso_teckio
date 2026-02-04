@@ -1,4 +1,5 @@
-﻿using API_SSO.DTO;
+﻿using API_SSO.Context;
+using API_SSO.DTO;
 using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
@@ -20,14 +21,15 @@ namespace API_SSO.Procesos
         private readonly SignInManager<IdentityUser> _SignInManager;
         private readonly IConfiguration _Configuracion;
         private readonly IEmailService _email;
-
-        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IEmailService emailService)
+        private readonly IRolService<SSOContext> _rolService;
+        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IEmailService emailService, IRolService<SSOContext> rolService)
         {
             _UserManager = userManager;
             _SignInManager = signInManager;
             _Configuracion = configuracion;
             _RoleManager = roleManager;
             _email = emailService;
+            _rolService = rolService;
         }
 
         public async Task<IdentityUser> ObtenerUsuario(string parametro)
@@ -145,13 +147,16 @@ namespace API_SSO.Procesos
             var rol = await _RoleManager.FindByIdAsync(objeto.IdRol);
             if (string.IsNullOrEmpty(rol.Id))
             {
-                respuesta.Descripcion = "No se encontró el usuario.";
+                respuesta.Descripcion = "No se encontró el rol.";
                 respuesta.Estatus = false;
                 return respuesta;
             }
-            //Le quita el rol actual
-            var rolActual = await _UserManager.GetRolesAsync(usuario);
-            await _UserManager.RemoveFromRolesAsync(usuario, rolActual);
+            if (!string.IsNullOrEmpty(objeto.AntiguoRolId))
+            {
+                //Le quita el rol actual
+                var rolActual = await _RoleManager.FindByNameAsync(objeto.AntiguoRolId);
+                await _UserManager.RemoveFromRoleAsync(usuario, rolActual.Name);
+            }
             //Agrega el rol actual
             var asignacion = await _UserManager.AddToRoleAsync(usuario, rol.Name);
             if (asignacion.Succeeded)
