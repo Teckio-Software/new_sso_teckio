@@ -115,7 +115,8 @@ namespace API_SSO.Procesos
                 Estatus = true,
                 FechaRegistro = DateTime.Now,
                 CodigoPostal = clienteCreacion.CpEmpresa,
-                Eliminado = false
+                Eliminado = false,
+                DiaPago = clienteCreacion.DiaPago
             };
             var empresaCreada = await _EmpresaService.CrearYObtener(empresa);
             if (empresaCreada.Id <= 0)

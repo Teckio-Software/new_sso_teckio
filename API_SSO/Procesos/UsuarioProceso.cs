@@ -58,14 +58,12 @@ namespace API_SSO.Procesos
                   Token = "El usuario ingresado es incorrecto."
                };
             }
-
             // Validar contraseña SIN emitir cookie
             var pwdCheck = await _SignInManager.CheckPasswordSignInAsync(
                 user,
                 credenciales.Password,
                 lockoutOnFailure: false
             );
-
             if (!pwdCheck.Succeeded)
             {
                 return new RespuestaAutenticacionDTO
@@ -74,7 +72,6 @@ namespace API_SSO.Procesos
                     Token = "La contraseña ingresada es incorrecta."
                 };
             }
-
             // Emitir SOLO el JWT
             return await ConstruirToken(credenciales);
         }
