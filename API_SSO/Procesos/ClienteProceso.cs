@@ -91,9 +91,10 @@ namespace API_SSO.Procesos
                 var resultado = await _UsuarioManager.CreateAsync(usuarioNuevoIdentity, clienteCreacion.Contrasena);
                 if (!resultado.Succeeded)
                 {
-                    respuesta.Estatus = false;
-                    respuesta.Descripcion = "Ocurrió un error al intentar crear el usuario.";
-                    return respuesta;
+                    throw new Exception("Ocurrió un error al intentar crear el usuario.");
+                    //respuesta.Estatus = false;
+                    //respuesta.Descripcion = "Ocurrió un error al intentar crear el usuario.";
+                    //return respuesta;
                 }
                 //Crea el primer rol de administrador
                 //var rolAdministrador = new IdentityRole
@@ -126,9 +127,10 @@ namespace API_SSO.Procesos
                 var empresaCreada = await _EmpresaService.CrearYObtener(empresa);
                 if (empresaCreada.Id <= 0)
                 {
-                    respuesta.Estatus = false;
-                    respuesta.Descripcion = "Ocurrió un error al intentar crear la empresa.";
-                    return respuesta;
+                    throw new Exception("Ocurrió un error al intentar crear la empresa.");
+                    //respuesta.Estatus = false;
+                    //respuesta.Descripcion = "Ocurrió un error al intentar crear la empresa.";
+                    //return respuesta;
                 }
                 //Genera el nombre de la base de datos
                 string nombreBD = clienteCreacion.NombreEmpresa + string.Format("{0:D3}", empresaCreada.Id);
@@ -138,17 +140,19 @@ namespace API_SSO.Procesos
                 var bDCreada = await _baseDeDatosProceso.VerifyInstallation(nombreBD);
                 if (!bDCreada)
                 {
-                    respuesta.Estatus = false;
-                    respuesta.Descripcion = "Ocurrió un error al intentar dar de alta la empresa";
-                    return respuesta;
+                    throw new Exception("Ocurrió un error al intentar dar de alta la empresa.");
+                    //respuesta.Estatus = false;
+                    //respuesta.Descripcion = "Ocurrió un error al intentar dar de alta la empresa";
+                    //return respuesta;
                 }
                 //Crea el proyecto dentro de la nueva base de datos
                 var IdProyecto = await _baseDeDatosProceso.CrearProyecto(clienteCreacion, nombreBD);
                 if (IdProyecto <= 0)
                 {
-                    respuesta.Estatus = false;
-                    respuesta.Descripcion = "Ocurrió un error al intentar crear el proyecto";
-                    return respuesta;
+                    throw new Exception("Ocurrió un error al intentar crear el proyecto.");
+                    //respuesta.Estatus = false;
+                    //respuesta.Descripcion = "Ocurrió un error al intentar crear el proyecto";
+                    //return respuesta;
                 }
                 //Crea su FSI y FSR
                 await _baseDeDatosProceso.CrearFSI(IdProyecto, nombreBD);
