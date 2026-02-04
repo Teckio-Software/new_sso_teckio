@@ -280,7 +280,6 @@ namespace API_SSO.Procesos
                     ,C.Eliminado
                     ,C.Estatus
                     ,C.FechaRegistro
-                    ,[DiaPago]
                 FROM Cliente C
                 for json path
                 """").ToList();
@@ -312,14 +311,14 @@ namespace API_SSO.Procesos
                 expires: zvExpiracion, signingCredentials: zvCreds);
             var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
 
-            var appUrl = _Configuracion["baseUrl"] + "reset-password";
+            var appUrl = _Configuracion["baseUrl"] + "on-boarding";
 
             var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
 
             var subject = "Bienvenido operativo";
             var html = $@"
                 <h2>Hola {user.Email} 👋</h2>
-                <p>Has da click aqúi para crear tu contraseña:</p>
+                <p>Haz click aquí para crear tu cuenta:</p>
                 <p>
                     <a href=""{link}"" 
                        style=""display:inline-block;
@@ -329,7 +328,7 @@ namespace API_SSO.Procesos
                               text-decoration:none;
                               border-radius:8px;
                               font-weight:bold;"">
-                        Comenzar tour 🚀
+                        Registrarse
                     </a>
                 </p>";
 
