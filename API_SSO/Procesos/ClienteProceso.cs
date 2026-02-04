@@ -81,116 +81,135 @@ namespace API_SSO.Procesos
                 respuesta.Descripcion = "Ya hay un usuario registrado con este nombre.";
                 return respuesta;
             }
-            //Crea el primer usuario
-            var usuarioNuevoIdentity = new IdentityUser { Email = clienteCreacion.CorreoElectronico, UserName = clienteCreacion.NombreUsuario };
-            var resultado = await _UsuarioManager.CreateAsync(usuarioNuevoIdentity, clienteCreacion.Contrasena);
-            if (!resultado.Succeeded)
+
+            // Iniciamos la transacción
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+            try
             {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "Ocurrió un error al intentar crear el usuario.";
-                return respuesta;
-            }
-            //Crea el primer rol de administrador
-            //var rolAdministrador = new IdentityRole
-            //{
-            //    Name = "Administrador"
-            //};
-            //var rolAdminRes = await _RolManager.CreateAsync(rolAdministrador);
-            //if (rolAdminRes.Succeeded)
-            //{
-            var usuarioCreado = await _UsuarioManager.FindByEmailAsync(clienteCreacion.CorreoElectronico);
-            await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Administrador");
-            //}
-            //else
-            //{
-            //    respuesta.Estatus = false;
-            //    respuesta.Descripcion = "Ocurrió un error al intentar crear el primer rol.";
-            //    return respuesta;
-            //}
-            //Crea la empresa en el SSO
-            EmpresaDTO empresa = new EmpresaDTO
-            {
-                NombreComercial = clienteCreacion.NombreEmpresa,
-                Rfc = clienteCreacion.RfcEmpresa,
-                Estatus = true,
-                FechaRegistro = DateTime.Now,
-                CodigoPostal = clienteCreacion.CpEmpresa,
-                Eliminado = false,
-                DiaPago = clienteCreacion.DiaPago
-            };
-            var empresaCreada = await _EmpresaService.CrearYObtener(empresa);
-            if (empresaCreada.Id <= 0)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "Ocurrió un error al intentar crear la empresa.";
-                return respuesta;
-            }
-            //Genera el nombre de la base de datos
-            string nombreBD = clienteCreacion.NombreEmpresa + string.Format("{0:D3}",empresaCreada.Id);
-            //Ejecuta el proceso para crear la base de datos
-            await _baseDeDatosProceso.CrearBaseDeDatos(nombreBD);
-            //Verifica si la base de datos se creó exitosamente
-            var bDCreada = await _baseDeDatosProceso.VerifyInstallation(nombreBD);
-            if (!bDCreada)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "Ocurrió un error al intentar dar de alta la empresa";
-                return respuesta;
-            }
-            //Crea el proyecto dentro de la nueva base de datos
-            var IdProyecto = await _baseDeDatosProceso.CrearProyecto(clienteCreacion, nombreBD);
-            if (IdProyecto <= 0)
-            {
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "Ocurrió un error al intentar crear el proyecto";
-                return respuesta;
-            }
-            //Crea su FSI y FSR
-            await _baseDeDatosProceso.CrearFSI(IdProyecto, nombreBD);
-            await _baseDeDatosProceso.CrearFSR(IdProyecto, nombreBD);
-            List<RolCreacionDTO> roles = new List<RolCreacionDTO>();
-            //Crea los roles
-            foreach(var rol in clienteCreacion.roles)
-            {
-                rol.IdEmpresa = empresaCreada.Id;
-                var rolCreado = await _rolProceso.CrearRol(rol);
-                roles.Add(new RolCreacionDTO
+                //Crea el primer usuario
+                var usuarioNuevoIdentity = new IdentityUser { Email = clienteCreacion.CorreoElectronico, UserName = clienteCreacion.NombreUsuario };
+                var resultado = await _UsuarioManager.CreateAsync(usuarioNuevoIdentity, clienteCreacion.Contrasena);
+                if (!resultado.Succeeded)
                 {
-                    Id = rolCreado.Id,
-                    Nombre = (rol.Nombre+"-"+rol.IdEmpresa)
-                });
-            }
-            //Crea los usuarios invitados
-            foreach(var usuario in clienteCreacion.invitaciones)
-            {
-                //Primero comprueba si ya existe un usuario con ese correo, si existe solo le asigna el rol y lo incluye en la empresa, de lo contrario crea el usuario primero
-                var existeInvitado = await _UsuarioManager.FindByEmailAsync(usuario.correoInvitado);
-                var invitado = new IdentityUser
-                {
-                    Email = usuario.correoInvitado,
-                    UserName = usuario.nombreInvitado
-                };
-                if (existeInvitado == null)
-                {
-                    var resultInvitado = await _UsuarioManager.CreateAsync(invitado);
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "Ocurrió un error al intentar crear el usuario.";
+                    return respuesta;
                 }
-                else
+                //Crea el primer rol de administrador
+                //var rolAdministrador = new IdentityRole
+                //{
+                //    Name = "Administrador"
+                //};
+                //var rolAdminRes = await _RolManager.CreateAsync(rolAdministrador);
+                //if (rolAdminRes.Succeeded)
+                //{
+                var usuarioCreado = await _UsuarioManager.FindByEmailAsync(clienteCreacion.CorreoElectronico);
+                await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Administrador");
+                //}
+                //else
+                //{
+                //    respuesta.Estatus = false;
+                //    respuesta.Descripcion = "Ocurrió un error al intentar crear el primer rol.";
+                //    return respuesta;
+                //}
+                //Crea la empresa en el SSO
+                EmpresaDTO empresa = new EmpresaDTO
                 {
-                    invitado = existeInvitado;
-                }
-                if (roles[usuario.rolInvitado] != null)
-                {
-                    await _UsuarioManager.AddToRoleAsync(invitado, roles[usuario.rolInvitado].Nombre);
-                }
-                var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
-                await InvitarOperativo(invitado, token, ct);
-                UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
-                {
-                    IdEmpresa = empresaCreada.Id,
-                    UserId = invitado.Id,
+                    NombreComercial = clienteCreacion.NombreEmpresa,
+                    Rfc = clienteCreacion.RfcEmpresa,
+                    Estatus = true,
+                    FechaRegistro = DateTime.Now,
+                    CodigoPostal = clienteCreacion.CpEmpresa,
                     Eliminado = false,
+                    DiaPago = clienteCreacion.DiaPago
                 };
-                await _usuarioxEmpresaService.CrearYObtener(relacion);
+                var empresaCreada = await _EmpresaService.CrearYObtener(empresa);
+                if (empresaCreada.Id <= 0)
+                {
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "Ocurrió un error al intentar crear la empresa.";
+                    return respuesta;
+                }
+                //Genera el nombre de la base de datos
+                string nombreBD = clienteCreacion.NombreEmpresa + string.Format("{0:D3}", empresaCreada.Id);
+                //Ejecuta el proceso para crear la base de datos
+                await _baseDeDatosProceso.CrearBaseDeDatos(nombreBD);
+                //Verifica si la base de datos se creó exitosamente
+                var bDCreada = await _baseDeDatosProceso.VerifyInstallation(nombreBD);
+                if (!bDCreada)
+                {
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "Ocurrió un error al intentar dar de alta la empresa";
+                    return respuesta;
+                }
+                //Crea el proyecto dentro de la nueva base de datos
+                var IdProyecto = await _baseDeDatosProceso.CrearProyecto(clienteCreacion, nombreBD);
+                if (IdProyecto <= 0)
+                {
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "Ocurrió un error al intentar crear el proyecto";
+                    return respuesta;
+                }
+                //Crea su FSI y FSR
+                await _baseDeDatosProceso.CrearFSI(IdProyecto, nombreBD);
+                await _baseDeDatosProceso.CrearFSR(IdProyecto, nombreBD);
+                List<RolCreacionDTO> roles = new List<RolCreacionDTO>();
+                //Crea los roles
+                foreach (var rol in clienteCreacion.roles)
+                {
+                    rol.IdEmpresa = empresaCreada.Id;
+                    var rolCreado = await _rolProceso.CrearRol(rol);
+                    roles.Add(new RolCreacionDTO
+                    {
+                        Id = rolCreado.Id,
+                        Nombre = (rol.Nombre + "-" + rol.IdEmpresa)
+                    });
+                }
+                //Crea los usuarios invitados
+                foreach (var usuario in clienteCreacion.invitaciones)
+                {
+                    //Primero comprueba si ya existe un usuario con ese correo, si existe solo le asigna el rol y lo incluye en la empresa, de lo contrario crea el usuario primero
+                    var existeInvitado = await _UsuarioManager.FindByEmailAsync(usuario.correoInvitado);
+                    var invitado = new IdentityUser
+                    {
+                        Email = usuario.correoInvitado,
+                        UserName = usuario.nombreInvitado
+                    };
+                    if (existeInvitado == null)
+                    {
+                        var resultInvitado = await _UsuarioManager.CreateAsync(invitado);
+                    }
+                    else
+                    {
+                        invitado = existeInvitado;
+                    }
+                    if (roles[usuario.rolInvitado] != null)
+                    {
+                        await _UsuarioManager.AddToRoleAsync(invitado, roles[usuario.rolInvitado].Nombre);
+                    }
+                    var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
+                    await InvitarOperativo(invitado, token, ct);
+                    UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
+                    {
+                        IdEmpresa = empresaCreada.Id,
+                        UserId = invitado.Id,
+                        Eliminado = false,
+                    };
+                    await _usuarioxEmpresaService.CrearYObtener(relacion);
+                }
+                respuesta.Estatus = true;
+                respuesta.Descripcion = "Tour completo exitosamente.";
+            }
+            catch (Exception ex)
+    {
+                // Si algo falla, se deshacen los cambios en la BD principal (SSO/Identity)
+                await transaction.RollbackAsync(ct);
+
+                respuesta.Estatus = false;
+                respuesta.Descripcion = $"Error en el proceso: {ex.Message}";
+
+                // TODO: Aquí deberías considerar un proceso de "Limpieza" manual 
+                // por si la base de datos física alcanzó a crearse pero el commit falló.
             }
             return respuesta;
         }
