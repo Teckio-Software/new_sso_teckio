@@ -59,6 +59,7 @@ namespace API_SSO.Controllers
             return resultado;
         }
 
+
         public record ValidateResetTokenRequest(string Email, string Token);
 
         [HttpPost]
