@@ -3,6 +3,7 @@ using API_SSO.DTO;
 using API_SSO.DTOs;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Graph.Models;
 using Microsoft.IdentityModel.Tokens;
@@ -218,8 +219,10 @@ namespace API_SSO.Procesos
                     {
                         await _UsuarioManager.AddToRoleAsync(invitado, roles[usuario.rolInvitado].Nombre);
                     }
-                    var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
-                    await InvitarOperativo(invitado, token, ct);
+                    //var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
+                    //var hash = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                    //await InvitarOperativo(invitado, hash, ct);
+                    await InvitarOperativo(invitado, ct);
                     UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
                     {
                         IdEmpresa = empresaCreada.Id,
@@ -327,28 +330,32 @@ namespace API_SSO.Procesos
             return datos;
         }
 
-        public async Task InvitarOperativo(IdentityUser user, string hashContrasena, CancellationToken ct)
+        public async Task InvitarOperativo(IdentityUser user, CancellationToken ct)
         {
-            var zvClaims = new List<Claim>()
-            {
-                new Claim("username", user!.UserName!),
-                new Claim("email", user.Email!),
-                new Claim("guid", user.Id),
-                new Claim("hash", hashContrasena)
-            };
+            //var zvClaims = new List<Claim>()
+            //{
+            //    new Claim("username", user!.UserName!),
+            //    new Claim("email", user.Email!),
+            //    new Claim("guid", user.Id),
+            //    new Claim("hash", hashContrasena)
+            //};
 
 
-            var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
-            var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
-            var zvExpiracion = DateTime.UtcNow.AddHours(8);
-            var zvToken = new JwtSecurityToken(issuer: null, audience: null, claims: zvClaims,
-                expires: zvExpiracion, signingCredentials: zvCreds);
-            var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
+            //var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
+            //var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
+            //var zvExpiracion = DateTime.UtcNow.AddHours(8);
+            //var zvToken = new JwtSecurityToken(issuer: null, audience: null, claims: zvClaims,
+            //    expires: zvExpiracion, signingCredentials: zvCreds);
+            //var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
 
-            var appUrl = _Configuracion["baseUrl"] + "on-boarding/operativo";
-            var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
+            var appUrl = _Configuracion["baseUrl"] + "on-boarding";
 
-            var subject = "Bienvenido";
+            var resetToken = await _UsuarioManager.GeneratePasswordResetTokenAsync(user);
+            var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
+
+            var link = $"{appUrl}?token={Uri.EscapeDataString(encodedToken)}";
+
+            var subject = "Bienvenido operativo";
             var html = $@"
                 <h2>Hola {user.Email} 👋</h2>
                 <p>Haz click aquí para crear tu cuenta:</p>
