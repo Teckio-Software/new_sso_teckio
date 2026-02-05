@@ -20,4 +20,9 @@
 
         public bool? Activo { get; set; }
     }
+
+    public class RolResultDTO : RolDTO
+    {
+        public string Nombre { get; set; }
+    }
 }

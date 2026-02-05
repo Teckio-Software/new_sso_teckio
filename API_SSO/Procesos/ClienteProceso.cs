@@ -27,8 +27,19 @@ namespace API_SSO.Procesos
         private readonly IConfiguration _Configuracion;
         private readonly IEmailService _email;
         private readonly IUsuarioxEmpresaService<SSOContext> _usuarioxEmpresaService;
+        private readonly IEmpresaXclienteService<SSOContext> _empresaxClienteService;
 
-        public ClienteProceso(UserManager<IdentityUser> usuarioManager, IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, RolProceso rolProceso, ComprobantePagoProceso comprobantePago, IClienteService<SSOContext> clienteService, SSOContext dbContext, IConfiguration configuracion, IEmailService email, IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService)
+        public ClienteProceso(UserManager<IdentityUser> usuarioManager, 
+            IEmpresaService<SSOContext> empresaService, 
+            BaseDeDatosProceso baseDeDatosProceso, 
+            RolProceso rolProceso, 
+            ComprobantePagoProceso comprobantePago, 
+            IClienteService<SSOContext> clienteService, 
+            SSOContext dbContext, IConfiguration configuracion, 
+            IEmailService email, 
+            IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService, 
+            IEmpresaXclienteService<SSOContext> empresaxClienteService
+            )
         {
             _UsuarioManager = usuarioManager;
             _EmpresaService = empresaService;
@@ -40,6 +51,7 @@ namespace API_SSO.Procesos
             _Configuracion = configuracion;
             _email = email;
             _usuarioxEmpresaService = usuarioxEmpresaService;
+            _empresaxClienteService = empresaxClienteService;
         }
 
         public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion, CancellationToken ct)
@@ -81,7 +93,13 @@ namespace API_SSO.Procesos
                 respuesta.Descripcion = "Ya hay un usuario registrado con este nombre.";
                 return respuesta;
             }
-
+            var cliente = await _clienteService.ObtenerXCorreo(clienteCreacion.CorreoElectronico);
+            if (cliente.Id <= 0)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Aún no existe un cliente con ese correo.";
+                return respuesta;
+            }
             // Iniciamos la transacción
             using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
             try
@@ -92,28 +110,8 @@ namespace API_SSO.Procesos
                 if (!resultado.Succeeded)
                 {
                     throw new Exception("Ocurrió un error al intentar crear el usuario.");
-                    //respuesta.Estatus = false;
-                    //respuesta.Descripcion = "Ocurrió un error al intentar crear el usuario.";
-                    //return respuesta;
                 }
-                //Crea el primer rol de administrador
-                //var rolAdministrador = new IdentityRole
-                //{
-                //    Name = "Administrador"
-                //};
-                //var rolAdminRes = await _RolManager.CreateAsync(rolAdministrador);
-                //if (rolAdminRes.Succeeded)
-                //{
                 var usuarioCreado = await _UsuarioManager.FindByEmailAsync(clienteCreacion.CorreoElectronico);
-                await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Administrador");
-                //}
-                //else
-                //{
-                //    respuesta.Estatus = false;
-                //    respuesta.Descripcion = "Ocurrió un error al intentar crear el primer rol.";
-                //    return respuesta;
-                //}
-                //Crea la empresa en el SSO
                 EmpresaDTO empresa = new EmpresaDTO
                 {
                     NombreComercial = clienteCreacion.NombreEmpresa,
@@ -128,10 +126,33 @@ namespace API_SSO.Procesos
                 if (empresaCreada.Id <= 0)
                 {
                     throw new Exception("Ocurrió un error al intentar crear la empresa.");
-                    //respuesta.Estatus = false;
-                    //respuesta.Descripcion = "Ocurrió un error al intentar crear la empresa.";
-                    //return respuesta;
                 }
+                EmpresaXclienteDTO empresaxCliente = new EmpresaXclienteDTO
+                {
+                    IdCliente = cliente.Id,
+                    IdEmpresa = empresaCreada.Id,
+                    Eliminado = false
+                };
+                var resultExC = await _empresaxClienteService.CrearYObtener(empresaxCliente);
+                if (resultExC.Id <= 0)
+                {
+                    throw new Exception("Ocurrió un error al relacionar a la empresa con el cliente.");
+                }
+                //Cambiar a rol simple
+                RolCreacionDTO primerRolCreacion = new RolCreacionDTO
+                {
+                    Nombre = "Administrador",
+                    Descripcion = "Administrador",
+                    Color = "",
+                    IdEmpresa = empresaCreada.Id,
+                    Claims = new List<RoleClaimViewModel>()
+                };
+                var primerRol = await _rolProceso.CrearRol(primerRolCreacion);
+                if (primerRol.Id <= 0)
+                {
+                    throw new Exception("No se pudo crear el primer rol");
+                }
+                await _UsuarioManager.AddToRoleAsync(usuarioCreado, primerRol.Nombre);
                 //Genera el nombre de la base de datos
                 string nombreBD = clienteCreacion.NombreEmpresa + string.Format("{0:D3}", empresaCreada.Id);
                 //Ejecuta el proceso para crear la base de datos
@@ -141,18 +162,12 @@ namespace API_SSO.Procesos
                 if (!bDCreada)
                 {
                     throw new Exception("Ocurrió un error al intentar dar de alta la empresa.");
-                    //respuesta.Estatus = false;
-                    //respuesta.Descripcion = "Ocurrió un error al intentar dar de alta la empresa";
-                    //return respuesta;
                 }
                 //Crea el proyecto dentro de la nueva base de datos
                 var IdProyecto = await _baseDeDatosProceso.CrearProyecto(clienteCreacion, nombreBD);
                 if (IdProyecto <= 0)
                 {
                     throw new Exception("Ocurrió un error al intentar crear el proyecto.");
-                    //respuesta.Estatus = false;
-                    //respuesta.Descripcion = "Ocurrió un error al intentar crear el proyecto";
-                    //return respuesta;
                 }
                 //Crea su FSI y FSR
                 await _baseDeDatosProceso.CrearFSI(IdProyecto, nombreBD);
@@ -201,6 +216,7 @@ namespace API_SSO.Procesos
                     };
                     await _usuarioxEmpresaService.CrearYObtener(relacion);
                 }
+                await transaction.CommitAsync(ct);
                 respuesta.Estatus = true;
                 respuesta.Descripcion = "Tour completo exitosamente.";
             }
@@ -242,11 +258,17 @@ namespace API_SSO.Procesos
                 respuesta.Descripcion = "Capture un correo electrónico válido";
                 return respuesta;
             }
+            var clienteExistente = await _clienteService.ObtenerXCorreo(informacion.Correo);
+            if (clienteExistente.Id > 0)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ya existe un cliente con ese correo.";
+                return respuesta;
+            }
             //Crea el cliente
             ClienteDTO cliente = new ClienteDTO
             {
                 RazonSocial = informacion.RazonSocial,
-
                 Correo = informacion.Correo,
                 CantidadEmpresas = informacion.CantidadEmpresas,
                 CantidadUsuariosXempresa = informacion.CantidadUsuariosXEmpresa,

@@ -8,6 +8,7 @@ namespace API_SSO.Servicios.Contratos
     {
         Task<List<ClienteDTO>> ObtenerTodos();
         Task<ClienteDTO> ObtenerXId(int id);
+        Task<ClienteDTO> ObtenerXCorreo(string correo);
         Task<ClienteDTO> CrearYObtener(ClienteDTO clienteDTO);
         Task<RespuestaDTO> Editar(ClienteDTO clienteDTO);
         Task<RespuestaDTO> Eliminar(int id);
