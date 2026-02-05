@@ -28,6 +28,7 @@ namespace API_SSO.Procesos
         private readonly IEmailService _email;
         private readonly IUsuarioxEmpresaService<SSOContext> _usuarioxEmpresaService;
         private readonly IEmpresaXclienteService<SSOContext> _empresaxClienteService;
+        private readonly RoleManager<IdentityRole> _RolManager;
 
         public ClienteProceso(UserManager<IdentityUser> usuarioManager, 
             IEmpresaService<SSOContext> empresaService, 
@@ -38,7 +39,8 @@ namespace API_SSO.Procesos
             SSOContext dbContext, IConfiguration configuracion, 
             IEmailService email, 
             IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService, 
-            IEmpresaXclienteService<SSOContext> empresaxClienteService
+            IEmpresaXclienteService<SSOContext> empresaxClienteService,
+            RoleManager<IdentityRole> RolManager
             )
         {
             _UsuarioManager = usuarioManager;
@@ -52,6 +54,7 @@ namespace API_SSO.Procesos
             _email = email;
             _usuarioxEmpresaService = usuarioxEmpresaService;
             _empresaxClienteService = empresaxClienteService;
+            _RolManager = RolManager;
         }
 
         public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion, CancellationToken ct)
@@ -139,20 +142,29 @@ namespace API_SSO.Procesos
                     throw new Exception("Ocurrió un error al relacionar a la empresa con el cliente.");
                 }
                 //Cambiar a rol simple
-                RolCreacionDTO primerRolCreacion = new RolCreacionDTO
+                //RolCreacionDTO primerRolCreacion = new RolCreacionDTO
+                //{
+                //    Nombre = "Administrador",
+                //    Descripcion = "Administrador",
+                //    Color = "",
+                //    IdEmpresa = empresaCreada.Id,
+                //    Claims = new List<RoleClaimViewModel>()
+                //};
+                //var primerRol = await _rolProceso.CrearRol(primerRolCreacion);
+                //if (primerRol.Id <= 0)
+                //{
+                //    throw new Exception("No se pudo crear el primer rol");
+                //}
+                var ExisteRol = await _RolManager.FindByNameAsync("Administrador");
+                if (ExisteRol == null)
                 {
-                    Nombre = "Administrador",
-                    Descripcion = "Administrador",
-                    Color = "",
-                    IdEmpresa = empresaCreada.Id,
-                    Claims = new List<RoleClaimViewModel>()
-                };
-                var primerRol = await _rolProceso.CrearRol(primerRolCreacion);
-                if (primerRol.Id <= 0)
-                {
-                    throw new Exception("No se pudo crear el primer rol");
+                    IdentityRole primerRol = new IdentityRole
+                    {
+                        Name = "Administrador"
+                    };
+                    await _RolManager.CreateAsync(primerRol);
                 }
-                await _UsuarioManager.AddToRoleAsync(usuarioCreado, primerRol.Nombre);
+                await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Administrador");
                 //Genera el nombre de la base de datos
                 string nombreBD = clienteCreacion.NombreEmpresa + string.Format("{0:D3}", empresaCreada.Id);
                 //Ejecuta el proceso para crear la base de datos

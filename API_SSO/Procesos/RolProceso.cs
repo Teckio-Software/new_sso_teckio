@@ -18,7 +18,7 @@ namespace API_SSO.Procesos
             _RolManager = roleManager;
         }
 
-        public async Task<RolResultDTO> CrearRol(RolCreacionDTO rol)
+        public async Task<RolDTO> CrearRol(RolCreacionDTO rol)
         {
             var nombreRol = rol.Nombre + "-" + rol.IdEmpresa;
             var nuevoRolIdentity = new IdentityRole
@@ -29,7 +29,8 @@ namespace API_SSO.Procesos
             var identityRol = await _RolManager.FindByNameAsync(nombreRol);
             if (string.IsNullOrEmpty(identityRol.Id))
             {
-                return new RolResultDTO();
+                //return new RolResultDTO();
+                return new RolDTO();
             }
             var rolCreado = await _service.CrearYObtener(new RolDTO
             {
@@ -42,26 +43,26 @@ namespace API_SSO.Procesos
                 IdEmpresa = rol.IdEmpresa,
                 IdAspNetRole = identityRol.Id,
             });
-            RolResultDTO rolResult = new RolResultDTO
-            {
-                Id = rolCreado.Id,
-                Descripcion = rolCreado.Descripcion,
-                Color = rolCreado.Color,
-                DeSistema = rolCreado.DeSistema,
-                Activo = rolCreado.Activo,
-                General = rolCreado.General,
-                FechaRegistro = rolCreado.FechaRegistro,
-                IdEmpresa = rolCreado.IdEmpresa,
-                IdAspNetRole = rolCreado.IdAspNetRole,
-                Nombre = nombreRol
-            };
+            //RolResultDTO rolResult = new RolResultDTO
+            //{
+            //    Id = rolCreado.Id,
+            //    Descripcion = rolCreado.Descripcion,
+            //    Color = rolCreado.Color,
+            //    DeSistema = rolCreado.DeSistema,
+            //    Activo = rolCreado.Activo,
+            //    General = rolCreado.General,
+            //    FechaRegistro = rolCreado.FechaRegistro,
+            //    IdEmpresa = rolCreado.IdEmpresa,
+            //    IdAspNetRole = rolCreado.IdAspNetRole,
+            //    Nombre = nombreRol
+            //};
             //Agrega los claims
             var selectedClaims = rol.Claims.Where(c => c.Selected).ToList();
             foreach (var claim in selectedClaims)
             {
                 await _RolManager.AddClaimAsync(identityRol, new Claim(claim.Type, claim.Value));
             }
-            return rolResult;
+            return rolCreado;
         }
 
         public async Task<RespuestaDTO> EditarRol(RolEdicionDTO objeto)
