@@ -226,7 +226,7 @@ namespace API_SSO.Procesos
             if (usuario == null)
             {
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "Token inválido o expirado.";
+                respuesta.Descripcion = "Usuario no encontrado";
                 return respuesta;
             }
 
@@ -248,6 +248,7 @@ namespace API_SSO.Procesos
             respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña.";
             return respuesta;
         }
+
 
         public async Task<bool> ValidarToken(string email, string token)
         {

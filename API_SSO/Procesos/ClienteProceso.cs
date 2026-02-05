@@ -345,11 +345,10 @@ namespace API_SSO.Procesos
                 expires: zvExpiracion, signingCredentials: zvCreds);
             var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
 
-            var appUrl = _Configuracion["baseUrl"] + "on-boarding";
-
+            var appUrl = _Configuracion["baseUrl"] + "on-boarding/operativo";
             var link = $"{appUrl}?token={Uri.EscapeDataString(token)}";
 
-            var subject = "Bienvenido operativo";
+            var subject = "Bienvenido";
             var html = $@"
                 <h2>Hola {user.Email} 👋</h2>
                 <p>Haz click aquí para crear tu cuenta:</p>
