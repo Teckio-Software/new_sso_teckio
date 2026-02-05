@@ -17,10 +17,11 @@ namespace API_SSO.Controllers
             _proyectoActualServce = proyectoActualServce;
         }
 
-        [HttpGet("ObtenerXIdUsuario/{string:id}")]
-        public async Task<ActionResult<ProyectoActualDTO>> ObtenerXIdUsuario(string id)
+        public record IdUsuario(string id);
+        [HttpPost("ObtenerXIdUsuario")]
+        public async Task<ActionResult<ProyectoActualDTO>> ObtenerXIdUsuario(IdUsuario parametro)
         {
-            var respuesta = await _proyectoActualServce.ObtenerXIdUsuario(id);
+            var respuesta = await _proyectoActualServce.ObtenerXIdUsuario(parametro.id);
             return respuesta;
         }
 

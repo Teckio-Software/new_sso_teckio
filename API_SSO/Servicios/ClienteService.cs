@@ -91,6 +91,12 @@ namespace API_SSO.Servicios
             return _Mapper.Map<List<ClienteDTO>>(lista);
         }
 
+        public async Task<ClienteDTO> ObtenerXCorreo(string correo)
+        {
+            var cliente = await _repository.Obtener(c => c.Correo == correo && (bool)!c.Eliminado );
+            return _Mapper.Map<ClienteDTO>(cliente);
+        }
+
         public async Task<ClienteDTO> ObtenerXId(int id)
         {
             var resultado = await _repository.Obtener(c => (bool)!c.Eliminado && c.Id == id);
