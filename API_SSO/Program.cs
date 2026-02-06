@@ -3,8 +3,11 @@ using API_SSO.DTO;
 using API_SSO.Servicios;
 using API_SSO.Servicios.Contratos;
 using API_SSO.Utilidades;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +27,25 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>(options => {
 .AddEntityFrameworkStores<SSOContext>()
 .AddDefaultTokenProviders();
 
+var jwtKey = builder.Configuration["llavejwt"];
+var keyBytes = Encoding.UTF8.GetBytes(jwtKey!);
+
+builder.Services.AddAuthentication(options => {
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options => {
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(keyBytes),
+        ValidateIssuer = false, // Cambia a true si tienes Issuer en appsettings
+        ValidateAudience = false, // Cambia a true si tienes Audience en appsettings
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+
 //Configura los CORS y otros servicios
 var origenesPermitidos = builder.Configuration.GetValue<string>("OrigenesPermitidos")!.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 if (origenesPermitidos.Length == 0)
@@ -31,19 +53,11 @@ if (origenesPermitidos.Length == 0)
 
 builder.Services.AddCors(zOptions =>
 {
-    //zOptions.AddDefaultPolicy(zBuilder =>
-    //{
-    //    zBuilder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()
-    //      .WithExposedHeaders(new string[] { "CantidadTotalRegistros" });
-    //});
-
-    var allowedHosts = builder.Configuration.GetSection("AllowedHosts").Get<string[]>();
-
-    if (allowedHosts != null && allowedHosts.Length > 0)
+    if (origenesPermitidos != null && origenesPermitidos.Length > 0)
     {
         zOptions.AddDefaultPolicy(builder =>
         {
-            builder.WithOrigins(allowedHosts)
+            builder.WithOrigins(origenesPermitidos)
                    .AllowAnyMethod()
                    .AllowAnyHeader();
         });
