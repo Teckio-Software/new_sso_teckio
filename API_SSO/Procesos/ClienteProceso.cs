@@ -249,7 +249,7 @@ namespace API_SSO.Procesos
             return respuesta;
         }
 
-        public async Task<RespuestaDTO> CrearCliente(ClienteConComprobanteDTO informacion, List<System.Security.Claims.Claim> claims)
+        public async Task<RespuestaDTO> CrearCliente(ClienteConComprobanteDTO informacion, List<System.Security.Claims.Claim> claims, CancellationToken ct)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             //Primero verifica que el correo, razón social y el comprobante no estén vacíos
@@ -273,6 +273,7 @@ namespace API_SSO.Procesos
                 respuesta.Descripcion = "Capture un correo electrónico válido";
                 return respuesta;
             }
+            //Valida que no haya algún otro cliente con ese correo
             var clienteExistente = await _clienteService.ObtenerXCorreo(informacion.Correo);
             if (clienteExistente.Id > 0)
             {
@@ -293,14 +294,30 @@ namespace API_SSO.Procesos
                 Estatus = true,
                 FechaRegistro = DateTime.Now,
             };
-            var clienteCreado = await _clienteService.CrearYObtener(cliente);
-            if (clienteCreado.Id <= 0)
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+            try
             {
+                var clienteCreado = await _clienteService.CrearYObtener(cliente);
+                if (clienteCreado.Id <= 0)
+                {
+                    throw new Exception("Ocurrió un problema al intentar crear el cliente.");
+                }
+                respuesta = await _comprobantePago.SubirComprobante(informacion.Comprobante, clienteCreado.Id, claims);
+                if (!respuesta.Estatus)
+                {
+                    throw new Exception("Ocurrió un problema al intentar subir el comprobante");
+                }
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync(ct);
                 respuesta.Estatus = false;
-                respuesta.Descripcion = "Ocurrió un problema al intentar crear al cliente";
+                respuesta.Descripcion = ex.Message;
                 return respuesta;
             }
-            respuesta = await _comprobantePago.SubirComprobante(informacion.Comprobante, clienteCreado.Id, claims);
+            await transaction.CommitAsync(ct);
+            respuesta.Estatus = true;
+            respuesta.Descripcion = "Operación completada exitosamente.";
             return respuesta;
         }
 
