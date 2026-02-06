@@ -83,6 +83,7 @@ namespace API_SSO.Procesos
                 FechaCarga = DateTime.Now,
                 IdUsuarioAutorizador = null,
                 Eliminado = false,
+                IdEmpresa = null,
             };
             var comprobanteCreado = await _Comprobanteservice.CrearYObtener(comprobante);
             if (comprobanteCreado.Id <=0)
