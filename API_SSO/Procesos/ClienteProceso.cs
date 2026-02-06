@@ -350,7 +350,7 @@ namespace API_SSO.Procesos
 
         public async Task InvitarOperativo(IdentityUser user, CancellationToken ct)
         {
-            var appUrl = _Configuracion["baseUrl"] + "on-boarding";
+            var appUrl = _Configuracion["baseUrl"] + "on-boarding/operativo";
 
             var resetToken = await _UsuarioManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
@@ -367,7 +367,8 @@ namespace API_SSO.Procesos
             _dbContext.Invitacions.Add(inv);
             await _dbContext.SaveChangesAsync(ct);
 
-            var link = $"{appUrl}?token={Uri.EscapeDataString(encodedToken)}";
+            // var link = $"{appUrl}?token={Uri.EscapeDataString(encodedToken)}";
+            var link = $"{appUrl}?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(encodedToken)}";
 
             var subject = "Bienvenido operativo";
             var html = $@"
