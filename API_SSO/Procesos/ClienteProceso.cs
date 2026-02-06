@@ -348,12 +348,12 @@ namespace API_SSO.Procesos
             //    expires: zvExpiracion, signingCredentials: zvCreds);
             //var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
 
-            var appUrl = _Configuracion["baseUrl"] + "on-boarding";
+            var appUrl = _Configuracion["baseUrl"] + "on-boarding/operativo";
 
             var resetToken = await _UsuarioManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
 
-            var link = $"{appUrl}?token={Uri.EscapeDataString(encodedToken)}";
+            var link = $"{appUrl}?email={Uri.EscapeDataString(user.Email)}&token={Uri.EscapeDataString(encodedToken)}";
 
             var subject = "Bienvenido operativo";
             var html = $@"
