@@ -37,7 +37,7 @@ namespace API_SSO.Procesos
             RespuestaDTO respuesta = new RespuestaDTO();
             var userEmail = claims.FirstOrDefault(z => z.Type == "email");
             
-            if (userEmail == null)  
+            if (userEmail == null || claims.Count<=0)  
             {
                 respuesta.Descripcion = "Los datos del usuario están incompletos.";
                 respuesta.Estatus = false;

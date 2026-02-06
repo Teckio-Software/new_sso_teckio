@@ -1,6 +1,7 @@
 ﻿using API_SSO.DTO;
 using API_SSO.DTOs;
 using API_SSO.Procesos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_SSO.Controllers
@@ -24,6 +25,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpPost("CrearCliente")]
+        [Authorize]
         public async Task<ActionResult<RespuestaDTO>> CrearCliente(ClienteConComprobanteDTO cliente, CancellationToken ct)
         {
             var authen = HttpContext.User;
