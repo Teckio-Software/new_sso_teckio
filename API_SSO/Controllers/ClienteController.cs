@@ -24,10 +24,10 @@ namespace API_SSO.Controllers
         }
 
         [HttpPost("CrearCliente")]
-        public async Task<ActionResult<RespuestaDTO>> CrearCliente(ClienteConComprobanteDTO cliente)
+        public async Task<ActionResult<RespuestaDTO>> CrearCliente(ClienteConComprobanteDTO cliente, CancellationToken ct)
         {
             var authen = HttpContext.User;
-            var resultado = await _proceso.CrearCliente(cliente, authen.Claims.ToList());
+            var resultado = await _proceso.CrearCliente(cliente, authen.Claims.ToList(), ct);
             return resultado;
         }
 
