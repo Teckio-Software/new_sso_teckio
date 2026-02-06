@@ -25,12 +25,18 @@ namespace API_SSO.Controllers
         //    var resultado = await _proceso.SubirComprobante(comprobante.archivo, comprobante.idCliente, authen.Claims.ToList());
         //    return resultado;
         //}
+        [HttpGet("todos")]
+        public async Task<ActionResult<List<ComprobantePagoDTO>>> ObtenerTodos()
+        {
+            var lista = await _proceso.ObtenerTodos();
+            return lista;
+        }
 
         [HttpGet("cancelarComprobante/{idComprobante:int}")]
         public async Task<ActionResult<RespuestaDTO>> CancelarComprobante(int idComprobante)
         {
             var resultado = await _proceso.CancelaComprobantePago(idComprobante);
-            return resultado;
+            return resultado;  
         }
 
         [HttpGet("autorizarComprobante/{idComprobante:int}")]

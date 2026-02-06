@@ -26,6 +26,12 @@ namespace API_SSO.Procesos
 
         }
 
+        public async Task<List<ComprobantePagoDTO>> ObtenerTodos()
+        {
+            var lista = await _Comprobanteservice.ObtenerTodos();
+            return lista;
+        }
+
         public async Task<RespuestaDTO> SubirComprobante(IFormFile archivo, int idCliente, List<System.Security.Claims.Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
