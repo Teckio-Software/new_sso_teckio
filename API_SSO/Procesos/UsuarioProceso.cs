@@ -93,8 +93,8 @@ namespace API_SSO.Procesos
             }
             var zvClaims = new List<Claim>()
             {
-                new Claim("username", user!.UserName!),
-                new Claim("email", user.Email!),
+                new Claim("username", user!.UserName),
+                new Claim("email", user.Email),
                 new Claim("guid", user.Id),
                 new Claim("activo","1")
             };
