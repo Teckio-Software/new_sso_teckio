@@ -53,9 +53,9 @@ namespace API_SSO.Controllers
 
         [HttpPost("restablecerContrasena")]
         [AllowAnonymous]
-        public async Task<ActionResult<RespuestaDTO>> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
+        public async Task<ActionResult<RespuestaDTO>> RestablecerContrasena(RecuperacionContrasenaDTO objeto, CancellationToken ct)
         {
-            var resultado = await _usuarioProceso.RestablecerContrasena(objeto);
+            var resultado = await _usuarioProceso.RestablecerContrasena(objeto, ct);
             return resultado;
         }
 

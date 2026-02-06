@@ -1,6 +1,7 @@
 ﻿using API_SSO.Context;
 using API_SSO.DTO;
 using API_SSO.DTOs;
+using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
@@ -349,26 +350,22 @@ namespace API_SSO.Procesos
 
         public async Task InvitarOperativo(IdentityUser user, CancellationToken ct)
         {
-            //var zvClaims = new List<Claim>()
-            //{
-            //    new Claim("username", user!.UserName!),
-            //    new Claim("email", user.Email!),
-            //    new Claim("guid", user.Id),
-            //    new Claim("hash", hashContrasena)
-            //};
-
-
-            //var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
-            //var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
-            //var zvExpiracion = DateTime.UtcNow.AddHours(8);
-            //var zvToken = new JwtSecurityToken(issuer: null, audience: null, claims: zvClaims,
-            //    expires: zvExpiracion, signingCredentials: zvCreds);
-            //var token = new JwtSecurityTokenHandler().WriteToken(zvToken);
-
             var appUrl = _Configuracion["baseUrl"] + "on-boarding";
 
             var resetToken = await _UsuarioManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
+
+            var inv = new Invitacion
+            {
+                Id = Guid.NewGuid(),
+                Email = user.Email,
+                CreatedAt = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddHours(5),
+                TokenJti = encodedToken,
+            };
+
+            _dbContext.Invitacions.Add(inv);
+            await _dbContext.SaveChangesAsync(ct);
 
             var link = $"{appUrl}?token={Uri.EscapeDataString(encodedToken)}";
 

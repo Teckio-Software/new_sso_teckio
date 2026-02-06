@@ -137,7 +137,6 @@ namespace API_SSO.Servicios
         }
 
         public async Task<(bool ok, Invitacion? invitacion, string? error)> RedeemAsync(string token, CancellationToken ct)
-
         {
             var issuer = "teckioerp";
             var audience = "onboarding";
@@ -166,6 +165,16 @@ namespace API_SSO.Servicios
             if (inv is null) return;
             inv.RedeemedAt = DateTimeOffset.UtcNow;
             await _db.SaveChangesAsync(ct);
+        }
+
+        public async Task<Invitacion> ObtenerXToken(string token)
+        {
+            var invitacion = await _db.Invitacions.Where(i=>i.TokenJti == token).FirstOrDefaultAsync();
+            if (invitacion==null)
+            {
+                return new Invitacion();
+            }
+            return invitacion;
         }
     }
 }

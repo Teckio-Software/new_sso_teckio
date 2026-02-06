@@ -8,5 +8,6 @@ namespace API_SSO.Servicios.Contratos
         Task<(bool ok, Invitacion? invitacion, string? error)> RedeemAsync(string token, CancellationToken ct);
         Task SeCompleto(Guid invitationId, CancellationToken ct);
         Task<Guid> InvitarUsuario(string email, CancellationToken ct);
+        Task<Invitacion> ObtenerXToken(string token);
     }
 }

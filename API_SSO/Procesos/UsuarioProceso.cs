@@ -22,7 +22,9 @@ namespace API_SSO.Procesos
         private readonly IConfiguration _Configuracion;
         private readonly IEmailService _email;
         private readonly IRolService<SSOContext> _rolService;
-        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IEmailService emailService, IRolService<SSOContext> rolService)
+        private readonly SSOContext _db;
+        private readonly IInvitacionService _invitacionService;
+        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IEmailService emailService, IRolService<SSOContext> rolService, SSOContext db, IInvitacionService invitacionService)
         {
             _UserManager = userManager;
             _SignInManager = signInManager;
@@ -30,6 +32,8 @@ namespace API_SSO.Procesos
             _RoleManager = roleManager;
             _email = emailService;
             _rolService = rolService;
+            _db = db;
+            _invitacionService = invitacionService;
         }
 
         public async Task<IdentityUser> ObtenerUsuario(string parametro)
@@ -180,6 +184,18 @@ namespace API_SSO.Procesos
             var resetToken = await _UserManager.GeneratePasswordResetTokenAsync(user);
             var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(resetToken));
 
+            var inv = new Invitacion
+            {
+                Id = Guid.NewGuid(),
+                Email = email,
+                CreatedAt = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddHours(1),
+                TokenJti = encodedToken,
+            };
+
+            _db.Invitacions.Add(inv);
+            await _db.SaveChangesAsync(ct);
+
             var appUrl = _Configuracion["baseUrl"] + "reset-password";
             var link = $"{appUrl}?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(encodedToken)}";
 
@@ -205,7 +221,7 @@ namespace API_SSO.Procesos
             await _email.EnviarHtml(from, email, subject, html, ct);
         }
 
-        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto)
+        public async Task<RespuestaDTO> RestablecerContrasena(RecuperacionContrasenaDTO objeto, CancellationToken ct)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             if (string.IsNullOrWhiteSpace(objeto.Email) || string.IsNullOrWhiteSpace(objeto.Token))
@@ -242,7 +258,20 @@ namespace API_SSO.Procesos
                 respuesta.Descripcion = "Token inválido o expirado.";
                 return respuesta;
             }
-
+            var invitacion = await _invitacionService.ObtenerXToken(decodedToken);
+            if (string.IsNullOrEmpty(invitacion.Id.ToString()))
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Token inválido o expirado.";
+                return respuesta;
+            }
+            if (DateTime.Now >= invitacion.ExpiresAt || invitacion.RedeemedAt!=null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Token inválido o expirado.";
+                return respuesta;
+            }
+            await _invitacionService.SeCompleto(invitacion.Id, ct);
             var cambio = await _UserManager.ResetPasswordAsync(usuario, decodedToken, objeto.NuevaContrasena);
             respuesta.Estatus = cambio.Succeeded;
             respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña.";
