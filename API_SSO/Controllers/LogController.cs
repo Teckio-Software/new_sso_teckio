@@ -17,6 +17,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpGet("ObtenerLogsEmpresa/{idempresa:int}")]
+        [Authorize]
         public async Task<List<LogDTO>> ObtenerLogsXEmpresa(int idempresa)
         {
             var lista = await _logService.ObtenerXEmpresa(idempresa);
@@ -24,6 +25,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpPost("CrearLog")]
+        [Authorize]
         public async Task<LogDTO> CrearLog(LogDTO logDTO)
         {
             var authen = HttpContext.User;

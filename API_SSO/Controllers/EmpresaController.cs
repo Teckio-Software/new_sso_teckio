@@ -1,5 +1,6 @@
 ﻿using API_SSO.DTO;
 using API_SSO.Procesos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_SSO.Controllers
@@ -16,9 +17,10 @@ namespace API_SSO.Controllers
         }
 
         [HttpPost("crearEmpresa")]
-        public async Task<ActionResult<RespuestaDTO>> CrearEmpresa([FromBody] EmpresaDTO empresaDTO)
+        [Authorize]
+        public async Task<ActionResult<RespuestaDTO>> CrearEmpresa([FromBody] EmpresaCreacionDTO empresaDTO, CancellationToken ct)
         {
-            var respuesta = await _empresaProceso.CrearEmpresa(empresaDTO);
+            var respuesta = await _empresaProceso.CrearEmpresa(empresaDTO, ct);
             return respuesta;
         }
     }

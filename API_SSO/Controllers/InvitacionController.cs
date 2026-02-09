@@ -31,6 +31,7 @@ namespace API_SSO.Controllers
         public record InvitarUsuarioRequest(string Email);
 
         [HttpPost("usuario")]
+        [Authorize]
         public async Task<IActionResult> InvitarUsuario([FromBody] InvitarUsuarioRequest req, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(req.Email))

@@ -1,4 +1,5 @@
 ﻿using API_SSO.DTO;
+using API_SSO.DTOs;
 using API_SSO.Models;
 using API_SSO.Servicios.Contratos;
 using AutoMapper;
@@ -73,6 +74,12 @@ namespace API_SSO.Servicios
                 respuesta.Descripcion = "Ocurrió un error al intentar eliminar el registro.";
                 return respuesta;
             }
+        }
+
+        public async Task<List<EmpresaXclienteDTO>> ObtenerPorIdCliente(int idCliente)
+        {
+            var lista = await _repository.Obtener(c=>c.IdCliente == idCliente);
+            return _Mapper.Map<List<EmpresaXclienteDTO>>(lista);
         }
 
         public async Task<List<EmpresaXclienteDTO>> ObtenerTodos()

@@ -9,6 +9,7 @@
         //Datos empresa
         public string? NombreEmpresa { get; set; }
         public string? RfcEmpresa { get; set; }
+        //public int DiaPago { get; set; }
         // tipodePersona: string;
         public string? TipoDeProyecto { get; set; }
         // tipoRegimen: string;
@@ -26,7 +27,6 @@
         public bool EsDomingo { get; set; }
         public string? FechaInicio { get; set; }
         public string? FechaFin { get; set; }
-        public int DiaPago { get; set; }
         //Datos roles
         public List<RolCreacionDTO> roles { get; set; }
         //Datos invitaciones
