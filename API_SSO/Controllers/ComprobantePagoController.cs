@@ -34,6 +34,14 @@ namespace API_SSO.Controllers
             return lista;
         }
 
+        [HttpGet("obtenerXIdCliente/{idCliente:int}")]
+        [Authorize]
+        public async Task<ActionResult<List<ComprobantePagoDTO>>> ObtenerXIdCliente(int idCliente)
+        {
+            var lista = await _proceso.ObtenerXIdCliente(idCliente);
+            return lista;
+        }
+
         [HttpGet("cancelarComprobante/{idComprobante:int}")]
         [Authorize]
         public async Task<ActionResult<RespuestaDTO>> CancelarComprobante(int idComprobante)

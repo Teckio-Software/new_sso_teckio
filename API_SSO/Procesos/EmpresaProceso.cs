@@ -100,5 +100,20 @@ namespace API_SSO.Procesos
             respuesta.Descripcion = "Empresa creada correctamente.";
             return respuesta;
         }
+
+        public async Task<List<EmpresaDTO>> ObtenerEmpresasXCliente(int idCliente)
+        {
+            List<EmpresaDTO> lista = new List<EmpresaDTO>();
+            var relaciones = await _empresaXClienteService.ObtenerPorIdCliente(idCliente);
+            foreach(var item in relaciones)
+            {
+                var empresa = await _EmpresaService.ObtenerXId(item.IdEmpresa);
+                if (empresa.Id > 0)
+                {
+                    lista.Add(empresa);
+                }
+            }
+            return lista;
+        }
     }
 }

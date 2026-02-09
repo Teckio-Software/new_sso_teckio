@@ -23,5 +23,12 @@ namespace API_SSO.Controllers
             var respuesta = await _empresaProceso.CrearEmpresa(empresaDTO, ct);
             return respuesta;
         }
+
+        [HttpGet("obtenerXIdCliente/{idCliente:int}")]
+        public async Task<ActionResult<List<EmpresaDTO>>> ObtenerXIdCliente(int idCliente)
+        {
+            var lista = await _empresaProceso.ObtenerEmpresasXCliente(idCliente);
+            return lista;
+        }
     }
 }

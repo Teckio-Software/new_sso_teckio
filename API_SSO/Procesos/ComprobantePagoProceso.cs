@@ -33,6 +33,13 @@ namespace API_SSO.Procesos
             return lista;
         }
 
+        public async Task<List<ComprobantePagoDTO>> ObtenerXIdCliente(int idCliente)
+        {
+            var lista = await _Comprobanteservice.ObtenerTodos();
+            lista = lista.Where(c=>c.IdCliente==idCliente).ToList();
+            return lista;
+        }
+
         public async Task<RespuestaDTO> SubirComprobante(IFormFile archivo, int idCliente, List<System.Security.Claims.Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
