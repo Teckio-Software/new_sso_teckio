@@ -1,5 +1,6 @@
 ﻿using API_SSO.DTO;
 using API_SSO.Procesos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_SSO.Controllers
@@ -16,6 +17,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpGet("todos")]
+        [Authorize]
         public async Task<ActionResult<List<CatalogoPermisoMenuDTO>>> Todos()
         {
             var lista = await _process.ObtenerTodos();

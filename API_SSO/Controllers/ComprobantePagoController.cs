@@ -1,5 +1,6 @@
 ﻿using API_SSO.DTO;
 using API_SSO.Procesos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_SSO.Controllers
@@ -26,6 +27,7 @@ namespace API_SSO.Controllers
         //    return resultado;
         //}
         [HttpGet("todos")]
+        [Authorize]
         public async Task<ActionResult<List<ComprobantePagoDTO>>> ObtenerTodos()
         {
             var lista = await _proceso.ObtenerTodos();
@@ -33,6 +35,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpGet("cancelarComprobante/{idComprobante:int}")]
+        [Authorize]
         public async Task<ActionResult<RespuestaDTO>> CancelarComprobante(int idComprobante)
         {
             var resultado = await _proceso.CancelaComprobantePago(idComprobante);
@@ -40,6 +43,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpGet("autorizarComprobante/{idComprobante:int}")]
+        [Authorize]
         public async Task<ActionResult<RespuestaDTO>> AutorizarComprobante(int idComprobante, CancellationToken ct)
         {
             var authen = HttpContext.User;

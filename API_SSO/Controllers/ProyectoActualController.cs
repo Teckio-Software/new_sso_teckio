@@ -1,6 +1,7 @@
 ﻿using API_SSO.Context;
 using API_SSO.DTO;
 using API_SSO.Servicios.Contratos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_SSO.Controllers
@@ -19,6 +20,7 @@ namespace API_SSO.Controllers
 
         public record IdUsuario(string id);
         [HttpPost("ObtenerXIdUsuario")]
+        [Authorize]
         public async Task<ActionResult<ProyectoActualDTO>> ObtenerXIdUsuario(IdUsuario parametro)
         {
             var respuesta = await _proyectoActualServce.ObtenerXIdUsuario(parametro.id);
@@ -26,6 +28,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpPost("CrearProyectoActual")]
+        [Authorize]
         public async Task<ActionResult<ProyectoActualDTO>> CrearProyectoActual([FromBody] ProyectoActualDTO parametro)
         {
             var respuesta = await _proyectoActualServce.CrearYObtener(parametro);
@@ -33,6 +36,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpPost("EditarProyectoActual")]
+        [Authorize]
         public async Task<ActionResult<RespuestaDTO>> EditarProyectoActual([FromBody] ProyectoActualDTO parametro)
         {
             var respuesta = await _proyectoActualServce.Editar(parametro);

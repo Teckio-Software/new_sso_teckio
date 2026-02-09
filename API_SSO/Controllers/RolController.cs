@@ -1,5 +1,6 @@
 ﻿using API_SSO.DTO;
 using API_SSO.Procesos;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_SSO.Controllers
@@ -16,6 +17,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpPost("CrearRol")]
+        [Authorize]
         public async Task<ActionResult<RolDTO>> CrearRol(RolCreacionDTO rol)
         {
             var resultado = await _proceso.CrearRol(rol);
@@ -23,6 +25,7 @@ namespace API_SSO.Controllers
         }
 
         [HttpPut("EditarRol")]
+        [Authorize]
         public async Task<ActionResult<RespuestaDTO>> EditarRol(RolEdicionDTO rol)
         {
             var resultado = await _proceso.EditarRol(rol);

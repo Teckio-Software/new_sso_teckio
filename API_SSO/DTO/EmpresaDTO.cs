@@ -20,4 +20,10 @@
 
         public int? DiaPago { get; set; }
     }
+
+    public class EmpresaCreacionDTO: EmpresaDTO
+    {
+        public bool PagoMismoDia {  get; set; }
+        public int IdCliente { get; set; }
+    }
 }

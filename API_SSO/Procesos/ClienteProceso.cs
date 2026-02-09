@@ -125,7 +125,9 @@ namespace API_SSO.Procesos
                     FechaRegistro = DateTime.Now,
                     CodigoPostal = clienteCreacion.CpEmpresa,
                     Eliminado = false,
-                    DiaPago = clienteCreacion.DiaPago
+                    //DiaPago = clienteCreacion.DiaPago
+                    //De momento esta programado para que el día de pago de la empresa sea el día en el que se registró el usuario
+                    DiaPago = DateTime.Now.Day,
                 };
                 var empresaCreada = await _EmpresaService.CrearYObtener(empresa);
                 if (empresaCreada.Id <= 0)
@@ -143,20 +145,6 @@ namespace API_SSO.Procesos
                 {
                     throw new Exception("Ocurrió un error al relacionar a la empresa con el cliente.");
                 }
-                //Cambiar a rol simple
-                //RolCreacionDTO primerRolCreacion = new RolCreacionDTO
-                //{
-                //    Nombre = "Administrador",
-                //    Descripcion = "Administrador",
-                //    Color = "",
-                //    IdEmpresa = empresaCreada.Id,
-                //    Claims = new List<RoleClaimViewModel>()
-                //};
-                //var primerRol = await _rolProceso.CrearRol(primerRolCreacion);
-                //if (primerRol.Id <= 0)
-                //{
-                //    throw new Exception("No se pudo crear el primer rol");
-                //}
                 var ExisteRol = await _RolManager.FindByNameAsync("Administrador");
                 if (ExisteRol == null)
                 {
@@ -294,6 +282,8 @@ namespace API_SSO.Procesos
                 Eliminado = false,
                 Estatus = true,
                 FechaRegistro = DateTime.Now,
+                //Al crearse un cliente solo tendrá una empresa, por lo que por defecto se cobra todo junto por ahora
+                PagoXempresa = false,
             };
             using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
             try
@@ -392,6 +382,12 @@ namespace API_SSO.Procesos
             await _email.EnviarHtml(from, user.Email, subject, html, ct);
 
             return;
+        }
+
+        public async Task<ClienteDTO> ObtenerClienteXId(int id)
+        {
+            var cliente = await _clienteService.ObtenerXId(id);
+            return cliente;
         }
     }
 }
