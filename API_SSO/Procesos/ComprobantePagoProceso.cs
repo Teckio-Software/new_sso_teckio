@@ -3,6 +3,7 @@ using API_SSO.DTO;
 using API_SSO.Servicios;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace API_SSO.Procesos
 {
@@ -35,8 +36,9 @@ namespace API_SSO.Procesos
         public async Task<RespuestaDTO> SubirComprobante(IFormFile archivo, int idCliente, List<System.Security.Claims.Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
-            var userEmail = claims.FirstOrDefault(z => z.Type == "email");
-            
+            var userEmail = claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
+
+
             if (userEmail == null || claims.Count<=0)  
             {
                 respuesta.Descripcion = "Los datos del usuario están incompletos.";
