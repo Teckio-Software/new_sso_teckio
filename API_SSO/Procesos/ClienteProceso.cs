@@ -384,6 +384,26 @@ namespace API_SSO.Procesos
             return;
         }
 
+        public async Task<RespuestaDTO> EditarCliente(ClienteDTO cliente, List<System.Security.Claims.Claim> claims)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var clienteExistente = await _clienteService.ObtenerXId(cliente.Id);
+            if (clienteExistente.Id <= 0)
+            {
+                respuesta.Descripcion = "No se encontró el cliente.";
+                respuesta.Estatus = false;
+                return respuesta;
+            }
+            clienteExistente.RazonSocial = cliente.RazonSocial;
+            clienteExistente.Correo = cliente.Correo;
+            clienteExistente.CostoXusuario = cliente.CostoXusuario;
+            //clienteExistente.Estatus = cliente.Estatus;
+            clienteExistente.PagoXempresa = cliente.PagoXempresa;
+            clienteExistente.CorreoConfirmed = cliente.CorreoConfirmed;
+            respuesta = await _clienteService.Editar(cliente);
+            return respuesta;
+        }
+
         public async Task<ClienteDTO> ObtenerClienteXId(int id)
         {
             var cliente = await _clienteService.ObtenerXId(id);
