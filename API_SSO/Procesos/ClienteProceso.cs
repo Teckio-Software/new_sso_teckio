@@ -318,11 +318,11 @@ namespace API_SSO.Procesos
                 SELECT C.Id
                     ,[RazonSocial]
                     ,[Correo]
-                    ,(SELECT COUNT(*) FROM EmpresaXCliente EX WHERE EX.IdCliente = C.Id) AS CantidadEmpresas
-                    ,(SELECT COUNT(*) FROM EmpresaXCliente EX INNER JOIN UsuarioXEmpresa UE ON EX.IdEmpresa = UE.IdEmpresa WHERE EX.IdCliente = C.Id)  AS CantidadUsuariosXEmpresa
-                    ,[CostoXUsuario]
-                    ,[CorreoConfirmed]
-                    ,C.Eliminado
+                    ,ISNULL(C.CantidadEmpresas, 0) AS CantidadEmpresas
+                    ,ISNULL(C.CantidadUsuariosXEmpresa, 0) AS CantidadUsuariosXempresa
+                    ,ISNULL([CostoXUsuario], 0) AS CostoXusuario
+                    ,ISNULL([CorreoConfirmed], 0) AS CorreoConfirmed
+                    ,ISNULL(C.Eliminado, 0) AS Eliminado
                     ,C.Estatus
                     ,C.FechaRegistro
                 FROM Cliente C
