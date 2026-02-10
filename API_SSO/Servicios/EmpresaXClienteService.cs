@@ -78,7 +78,7 @@ namespace API_SSO.Servicios
 
         public async Task<List<EmpresaXclienteDTO>> ObtenerPorIdCliente(int idCliente)
         {
-            var lista = await _repository.Obtener(c=>c.IdCliente == idCliente);
+            var lista = await _repository.ObtenerTodos(c=>c.IdCliente == idCliente);
             return _Mapper.Map<List<EmpresaXclienteDTO>>(lista);
         }
 
