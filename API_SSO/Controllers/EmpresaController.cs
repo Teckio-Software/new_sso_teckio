@@ -30,5 +30,13 @@ namespace API_SSO.Controllers
             var lista = await _empresaProceso.ObtenerEmpresasXCliente(idCliente);
             return lista;
         }
+
+        [HttpPost("editarEmpresa")]
+        public async Task<ActionResult<RespuestaDTO>> EditarEmpresa(EmpresaDTO empresa)
+        {
+            var authen = HttpContext.User;
+            var resultado = await _empresaProceso.EditarEmpresa(empresa, authen.Claims.ToList());
+            return resultado;
+        }
     }
 }

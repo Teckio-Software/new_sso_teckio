@@ -12,14 +12,16 @@ namespace API_SSO.Procesos
         private readonly IClienteService<SSOContext> _ClienteService;
         private readonly IEmpresaXclienteService<SSOContext> _empresaXClienteService;
         private readonly SSOContext _dbContext;
+        private readonly LogProceso _logProceso;
 
-        public EmpresaProceso(IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, IClienteService<SSOContext> clienteService, IEmpresaXclienteService<SSOContext> empresaXClienteService, SSOContext dbContext)
+        public EmpresaProceso(IEmpresaService<SSOContext> empresaService, BaseDeDatosProceso baseDeDatosProceso, IClienteService<SSOContext> clienteService, IEmpresaXclienteService<SSOContext> empresaXClienteService, SSOContext dbContext, LogProceso logProceso)
         {
             _EmpresaService = empresaService;
             _baseDeDatosProceso = baseDeDatosProceso;
             _ClienteService = clienteService;
             _empresaXClienteService = empresaXClienteService;
             _dbContext = dbContext;
+            _logProceso = logProceso;
         }
 
         public async Task<RespuestaDTO> CrearEmpresa(EmpresaCreacionDTO empresa, CancellationToken ct)
@@ -98,6 +100,38 @@ namespace API_SSO.Procesos
             await transaction.CommitAsync(ct);
             respuesta.Estatus = true;
             respuesta.Descripcion = "Empresa creada correctamente.";
+            return respuesta;
+        }
+
+        public async Task<RespuestaDTO> EditarEmpresa(EmpresaDTO empresaDTO, List<System.Security.Claims.Claim> claims)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var IdUsStr = claims.Where(z => z.Type == "idUsuario").ToList();
+            if (IdUsStr[0].Value == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "La información del usuario es inconsistente.";
+                return respuesta;
+            }
+            var IdUsuario = IdUsStr[0].Value;
+            LogDTO log = new LogDTO
+            {
+                UserId = IdUsuario,
+                Nivel = "Proceso",
+                Metodo = "EditarEmpresa",
+                IdEmpresa = empresaDTO.Id
+            };
+            respuesta = await _EmpresaService.Editar(empresaDTO);
+            if (respuesta.Estatus)
+            {
+                log.Descripcion = "Empresa editada exitosamente";
+                await _logProceso.CrearLog(log);
+            }
+            else
+            {
+                log.Descripcion = "Ocurrió un error al intentar editar la empresa";
+                await _logProceso.CrearLog(log);
+            }
             return respuesta;
         }
 

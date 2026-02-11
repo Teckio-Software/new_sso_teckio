@@ -17,15 +17,16 @@ namespace API_SSO.Controllers
             _proceso = proceso;
         }
 
-        //public record ComprobanteConIdCliente(IFormFile archivo, int idCliente);
+        public record ComprobanteConIdCliente(IFormFile archivo, int idCliente);
 
-        //[HttpPost("subirComprobante")]
-        //public async Task<ActionResult<RespuestaDTO>> subirComprobante(ComprobanteConIdCliente comprobante)
-        //{
-        //    var authen = HttpContext.User;
-        //    var resultado = await _proceso.SubirComprobante(comprobante.archivo, comprobante.idCliente, authen.Claims.ToList());
-        //    return resultado;
-        //}
+        [HttpPost("subirComprobante")]
+        public async Task<ActionResult<RespuestaDTO>> subirComprobante(ComprobanteConIdCliente comprobante)
+        {
+            var authen = HttpContext.User;
+            var resultado = await _proceso.SubirComprobante(comprobante.archivo, comprobante.idCliente, authen.Claims.ToList());
+            return resultado;
+        }
+
         [HttpGet("todos")]
         [Authorize]
         public async Task<ActionResult<List<ComprobantePagoDTO>>> ObtenerTodos()

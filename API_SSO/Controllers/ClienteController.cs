@@ -49,5 +49,14 @@ namespace API_SSO.Controllers
             var resultado = await _proceso.ObtenerClienteXId(idCliente);
             return resultado;
         }
+
+        [HttpPost("editarCliente")]
+        [Authorize]
+        public async Task<ActionResult<RespuestaDTO>> EditarCliente(ClienteDTO cliente)
+        {
+            var authen = HttpContext.User;
+            var resultado = await _proceso.EditarCliente(cliente, authen.Claims.ToList());
+            return resultado;
+        }
     }
 }
