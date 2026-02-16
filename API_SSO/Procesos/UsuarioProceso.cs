@@ -80,7 +80,7 @@ namespace API_SSO.Procesos
             return await ConstruirToken(credenciales);
         }
 
-        private async Task<RespuestaAutenticacionDTO> ConstruirToken(CredencialesUsuarioDTO credenciales)
+        public async Task<RespuestaAutenticacionDTO> ConstruirToken(CredencialesUsuarioDTO credenciales)
         {
             var user = await ObtenerUsuario(credenciales.Email);
             if (user == null)
@@ -123,6 +123,7 @@ namespace API_SSO.Procesos
             {
                 zvClaims.Add(claimAdministradorRoles);
             }
+            zvClaims.Add(new Claim("idUsuario", user.Id));
             var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
             var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
             var zvExpiracion = DateTime.UtcNow.AddHours(5);

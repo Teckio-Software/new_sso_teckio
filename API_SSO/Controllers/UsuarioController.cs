@@ -1,5 +1,6 @@
 ﻿using API_SSO.DTO;
 using API_SSO.Procesos;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -89,6 +90,25 @@ namespace API_SSO.Controllers
         {
             var respuesta = await _usuarioProceso.ValidarNombreUsuario(parametro.parametro);
             return respuesta;
+        }
+
+        [HttpGet("actualizarClaims")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+
+        public async Task<ActionResult<RespuestaAutenticacionDTO>> ActualizarClaims()
+        {
+            var zCredenciales = new CredencialesUsuarioDTO();
+            var authen = HttpContext.User;
+            var usernameClaim = authen.Claims.FirstOrDefault()!.Value;
+            if (usernameClaim == null)
+            {
+                RespuestaAutenticacionDTO resp = new RespuestaAutenticacionDTO();
+                resp.FechaExpiracion = DateTime.Today;
+                resp.Token = "NoToken";
+                return resp;
+            }
+            zCredenciales.Email = usernameClaim;
+            return await _usuarioProceso.ConstruirToken(zCredenciales);
         }
     }
 }

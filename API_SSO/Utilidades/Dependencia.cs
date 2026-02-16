@@ -22,6 +22,7 @@ namespace API_SSO.Utilidades
             services.AddScoped(typeof(ComprobantePagoProceso));
             services.AddScoped(typeof(CatalogoPermisosProcess));
             services.AddScoped(typeof(LogProceso));
+            services.AddScoped(typeof(UsuarioEmpresasProceso));
             //API_SSO
             services.AddScoped(typeof(IClienteService<>),typeof(ClienteService<>));
             services.AddScoped(typeof(IComprobantePagoService<>),typeof(ComprobantePagoService<>));
