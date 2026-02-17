@@ -12,6 +12,7 @@ public partial class UsuarioXempresa
     public int IdEmpresa { get; set; }
 
     public bool? Eliminado { get; set; }
+    public bool Activo { get; set; }
 
     public virtual Empresa IdEmpresaNavigation { get; set; } = null!;
 

@@ -31,5 +31,13 @@ namespace API_SSO.Controllers
             var resultado = await _proceso.EditarRol(rol);
             return resultado;
         }
+
+        [HttpGet("ObtenerRolesXEmpresa/{idEmpresa:int}")]
+        [Authorize]
+        public async Task<ActionResult<List<RolDTO>>> ObtenerRolesXEmpresa(int idEmpresa)
+        {
+            var lista = await _proceso.ObtenerXEmpresa(idEmpresa);
+            return lista;
+        }
     }
 }

@@ -21,19 +21,30 @@ namespace API_SSO.Procesos
         private readonly SignInManager<IdentityUser> _SignInManager;
         private readonly IConfiguration _Configuracion;
         private readonly IEmailService _email;
-        private readonly IRolService<SSOContext> _rolService;
+        private readonly RolProceso _rolProceso;
         private readonly SSOContext _db;
         private readonly IInvitacionService _invitacionService;
-        public UsuarioProceso(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, IConfiguration configuracion, RoleManager<IdentityRole> roleManager, IEmailService emailService, IRolService<SSOContext> rolService, SSOContext db, IInvitacionService invitacionService)
+        private readonly IProyectoActualServce<SSOContext> _proyectoActualServce;
+        public UsuarioProceso(UserManager<IdentityUser> userManager, 
+            SignInManager<IdentityUser> signInManager, 
+            IConfiguration configuracion, 
+            RoleManager<IdentityRole> roleManager, 
+            IEmailService emailService, 
+            RolProceso rolProceso, 
+            SSOContext db, 
+            IInvitacionService invitacionService,
+            IProyectoActualServce<SSOContext> proyectoActualServce
+            )
         {
             _UserManager = userManager;
             _SignInManager = signInManager;
             _Configuracion = configuracion;
             _RoleManager = roleManager;
             _email = emailService;
-            _rolService = rolService;
+            _rolProceso = rolProceso;
             _db = db;
             _invitacionService = invitacionService;
+            _proyectoActualServce = proyectoActualServce;
         }
 
         public async Task<IdentityUser> ObtenerUsuario(string parametro)
@@ -98,19 +109,35 @@ namespace API_SSO.Procesos
                 new Claim("guid", user.Id),
                 new Claim("activo","1")
             };
-            var roles = await _UserManager.GetRolesAsync(user);
+            //var roles = await _UserManager.GetRolesAsync(user);
             //var claims = _UserManager.GetClaimsAsync(user).Result;
             List<Claim> claims = new List<Claim>();
-            foreach (var item in roles)
+            var usuarioUltimaSeccion = await _proyectoActualServce.ObtenerXIdUsuario(user.Id);
+            if (usuarioUltimaSeccion.Id > 0)
             {
-                var rol = await _RoleManager.FindByNameAsync(item);
-                zvClaims.Add(new Claim("rol", rol.Name));
-                if (rol == null)
+                //foreach (var item in roles)
+                //{
+                //    var rol = await _RoleManager.FindByNameAsync(item);
+                //    var registroRol = await _rolService.ObtenerXIdAsp(rol.Id);
+                //    if (registroRol.IdEmpresa != usuarioUltimaSeccion.IdEmpresa)
+                //    {
+                //        continue;
+                //    }
+                //    zvClaims.Add(new Claim("role", rol.Name));
+                //    if (rol == null)
+                //    {
+                //        continue;
+                //    }
+                //    var RolClaims = await _RoleManager.GetClaimsAsync(rol);
+                //    zvClaims.AddRange(RolClaims);
+                //}
+                var rolAsignado = await _rolProceso.ObtenerRolXUsuarioXEmpresa(user, usuarioUltimaSeccion.IdEmpresa);
+                if (rolAsignado.Id > 0)
                 {
-                    continue;
+                    var rol = await _RoleManager.FindByIdAsync(rolAsignado.IdAspNetRole);
+                    zvClaims.Add(new Claim("role", rol.Name));
                 }
-                var RolClaims = await _RoleManager.GetClaimsAsync(rol);
-                claims.AddRange(RolClaims);
+
             }
             //Si tiene privilegios de Super usuario o de Panel administrador los agrega como Claim
             var claimAdministrador = claims.FirstOrDefault(z => z.Value == "Super usuario");
@@ -123,6 +150,7 @@ namespace API_SSO.Procesos
             {
                 zvClaims.Add(claimAdministradorRoles);
             }
+            
             zvClaims.Add(new Claim("idUsuario", user.Id));
             var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
             var zvCreds = new SigningCredentials(zvLlave, SecurityAlgorithms.HmacSha256);
@@ -153,12 +181,28 @@ namespace API_SSO.Procesos
                 respuesta.Estatus = false;
                 return respuesta;
             }
-            if (!string.IsNullOrEmpty(objeto.AntiguoRolId))
+            //if (!string.IsNullOrEmpty(objeto.AntiguoRolId))
+            //{
+            //    //Le quita el rol actual
+            //    var rolActual = await _RoleManager.FindByNameAsync(objeto.AntiguoRolId);
+            //    await _UserManager.RemoveFromRoleAsync(usuario, rolActual.Name);
+            //}
+            var rolActualRegistro = await _rolProceso.ObtenerRolXUsuarioXEmpresa(usuario, objeto.IdEmpresa);
+            if (rolActualRegistro.Id > 0)
             {
-                //Le quita el rol actual
-                var rolActual = await _RoleManager.FindByNameAsync(objeto.AntiguoRolId);
-                await _UserManager.RemoveFromRoleAsync(usuario, rolActual.Name);
+                var rolActual = await _RoleManager.FindByIdAsync(rolActualRegistro.IdAspNetRole);
+                if (rolActual != null)
+                {
+                    await _UserManager.RemoveFromRoleAsync(usuario, rolActual.Name);
+                }
+                else
+                {
+                    respuesta.Descripcion = "No se encontró el rol.";
+                    respuesta.Estatus = false;
+                    return respuesta;
+                }
             }
+
             //Agrega el rol actual
             var asignacion = await _UserManager.AddToRoleAsync(usuario, rol.Name);
             if (asignacion.Succeeded)
@@ -344,5 +388,7 @@ namespace API_SSO.Procesos
             respuesta.Descripcion = "Ya hay un usuario con ese nombre.";
             return respuesta;
         }
+
+        
     }
 }

@@ -14,11 +14,17 @@ namespace API_SSO.Procesos
             _service = service;
         }
 
-        public async Task<LogDTO> CrearLog(LogDTO logDTO)
+        public async Task<LogDTO> CrearLog(string userId, string nivel, string metodo, string descripcion)
         {
+            LogDTO logDTO = new LogDTO();
             logDTO.EsSso = true;
             logDTO.Fecha = DateTime.Now;
             logDTO.Eliminado = false;
+            logDTO.IdEmpresa = null;
+            logDTO.UserId = userId;
+            logDTO.Nivel = nivel;
+            logDTO.Metodo = metodo;
+            logDTO.Descripcion = descripcion;
             var resultado = await _service.CrearYObtener(logDTO);
             return resultado;
         }

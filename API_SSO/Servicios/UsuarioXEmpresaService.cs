@@ -21,6 +21,7 @@ namespace API_SSO.Servicios
         public async Task<UsuarioXempresaDTO> CrearYObtener(UsuarioXempresaDTO usuarioXempresa)
         {
             usuarioXempresa.Eliminado = false;
+            usuarioXempresa.Activo = true;
             var objetoCreado = await _repository.Crear(_Mapper.Map<UsuarioXempresa>(usuarioXempresa));
             return _Mapper.Map<UsuarioXempresaDTO>(objetoCreado);
         }
@@ -39,6 +40,7 @@ namespace API_SSO.Servicios
                 }
                 objetoEncontrado.UserId = usuarioXempresa.UserId;
                 objetoEncontrado.IdEmpresa = usuarioXempresa.IdEmpresa;
+                objetoEncontrado.Activo = usuarioXempresa.Activo;
                 respuesta.Estatus = await _repository.Editar(objetoEncontrado);
                 respuesta.Descripcion = respuesta.Estatus?"Registro editado exitsamente.": "Ocurrió un error al intentar editar el registro.";
                 return respuesta;
@@ -64,6 +66,7 @@ namespace API_SSO.Servicios
                     return respuesta;
                 }
                 objetoEncontrado.Eliminado = true;
+                respuesta.Estatus = await _repository.Editar(objetoEncontrado);
                 respuesta.Descripcion = respuesta.Estatus ? "Registro eliminado exitsamente." : "Ocurrió un error al intentar eliminar el registro.";
                 return respuesta;
             }
@@ -85,6 +88,12 @@ namespace API_SSO.Servicios
         {
             var objetoEncontrado = await _repository.Obtener(u => u.Id == id && (bool)!u.Eliminado);
             return _Mapper.Map<UsuarioXempresaDTO>(objetoEncontrado);
+        }
+
+        public async Task<List<UsuarioXempresaDTO>> ObtenerXIdEmpresa(int IdEmpresa)
+        {
+            var lista = await _repository.ObtenerTodos(u => (bool)!u.Eliminado && u.IdEmpresa == IdEmpresa);
+            return _Mapper.Map<List<UsuarioXempresaDTO>>(lista);
         }
 
         public async Task<List<UsuarioXempresaDTO>> ObtenerXIdUsuario(string IdUsuario)

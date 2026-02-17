@@ -7,6 +7,7 @@
         public string UserId { get; set; } = null!;
 
         public int IdEmpresa { get; set; }
+        public bool Activo { get; set; }
 
         public bool? Eliminado { get; set; }
     }

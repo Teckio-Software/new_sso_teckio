@@ -33,5 +33,29 @@ namespace API_SSO.Controllers
             var resultado = await _proceso.ObtenerEmpresasPerteneciente(HttpContext.User.Claims.ToList());
             return resultado;
         }
+
+        [HttpPost("ObtenerEmpresasXUsuarioRelacion")]
+        [Authorize]
+        public async Task<ActionResult<List<RelacionEmpresaUsuarioDTO>>> ObtenerEmpresasPertenecienteXIdUsuario(IdUsuario parametro)
+        {
+            var resultado = await _proceso.ObtenerEmpresasPertenecientePorUsuario(HttpContext.User.Claims.ToList(), parametro.id);
+            return resultado;
+        }
+
+        [HttpGet("ObtenerUsuariosXEmpresa/{idEmpresa:int}")]
+        [Authorize]
+        public async Task<ActionResult<List<UsuarioDTO>>> ObtenerUsuariosXEmpresa(int idEmpresa)
+        {
+            var resultado = await _proceso.ObtenerUsuariosXEmpresa(idEmpresa, HttpContext.User.Claims.ToList());
+            return resultado;
+        }
+
+        [HttpPost("activarDesactivarEmpresaEnUsuario")]
+        [Authorize]
+        public async Task<ActionResult<RespuestaDTO>> ActivarDesactivarEmpresaEnUsuario(RelacionEmpresaUsuarioDTO parametro)
+        {
+            var resultado = await _proceso.ActivarDesactivarEmpresaEnUsuario(parametro);
+            return resultado;
+        }
     }
 }

@@ -145,16 +145,16 @@ namespace API_SSO.Procesos
                 {
                     throw new Exception("Ocurrió un error al relacionar a la empresa con el cliente.");
                 }
-                var ExisteRol = await _RolManager.FindByNameAsync("Administrador");
+                var ExisteRol = await _RolManager.FindByNameAsync("Cliente");
                 if (ExisteRol == null)
                 {
                     IdentityRole primerRol = new IdentityRole
                     {
-                        Name = "Administrador"
+                        Name = "Cliente"
                     };
                     await _RolManager.CreateAsync(primerRol);
                 }
-                await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Administrador");
+                await _UsuarioManager.AddToRoleAsync(usuarioCreado, "Cliente");
                 //Genera el nombre de la base de datos
                 string nombreBD = clienteCreacion.NombreEmpresa + string.Format("{0:D3}", empresaCreada.Id);
                 //Ejecuta el proceso para crear la base de datos

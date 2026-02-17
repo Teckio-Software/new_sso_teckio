@@ -6,7 +6,7 @@
 
         public string UserId { get; set; } = null!;
 
-        public int IdEmpresa { get; set; }
+        public int? IdEmpresa { get; set; }
 
         public bool EsSso { get; set; }
 

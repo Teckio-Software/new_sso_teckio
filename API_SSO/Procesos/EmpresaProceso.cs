@@ -42,6 +42,12 @@ namespace API_SSO.Procesos
             //Obtiene al cliente, sus relaciones y la última empresa registrada
             var cliente = await _ClienteService.ObtenerXId(empresa.IdCliente);
             var relaciones = await _empresaXClienteService.ObtenerPorIdCliente(empresa.IdCliente);
+            if (relaciones.Count <= 0)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ocurrió un problema al obtener la información del cliente";
+                return respuesta;
+            }
             var ultimaEmpresa = await _EmpresaService.ObtenerXId(relaciones[relaciones.Count - 1].IdEmpresa);
             using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
             try
@@ -114,23 +120,14 @@ namespace API_SSO.Procesos
                 return respuesta;
             }
             var IdUsuario = IdUsStr[0].Value;
-            LogDTO log = new LogDTO
-            {
-                UserId = IdUsuario,
-                Nivel = "Proceso",
-                Metodo = "EditarEmpresa",
-                IdEmpresa = empresaDTO.Id
-            };
             respuesta = await _EmpresaService.Editar(empresaDTO);
             if (respuesta.Estatus)
             {
-                log.Descripcion = "Empresa editada exitosamente";
-                await _logProceso.CrearLog(log);
+                await _logProceso.CrearLog(IdUsuario, "EditarEmpresa", "Proceso", "Empresa editada exitosamente");
             }
             else
             {
-                log.Descripcion = "Ocurrió un error al intentar editar la empresa";
-                await _logProceso.CrearLog(log);
+                await _logProceso.CrearLog(IdUsuario, "EditarEmpresa", "Proceso", "Ocurrió un error al intentar editar la empresa");
             }
             return respuesta;
         }

@@ -34,7 +34,8 @@ namespace API_SSO.DTO
     {
         public string IdUsuario { get; set; }
         public string IdRol { get; set; }
-        public string AntiguoRolId { get; set; }
+        //public string AntiguoRolId { get; set; }
+        public int IdEmpresa { get; set; }
     }
 
     public class RecuperacionContrasenaDTO

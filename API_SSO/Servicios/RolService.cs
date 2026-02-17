@@ -73,5 +73,11 @@ namespace API_SSO.Servicios
             var resultado = await _repository.Obtener(r => r.Id == id);
             return _Mapper.Map<RolDTO>(resultado);
         }
+
+        public async Task<RolDTO> ObtenerXIdAsp(string idAsp)
+        {
+            var rol = await _repository.Obtener(r => r.IdAspNetRole == idAsp);
+            return _Mapper.Map<RolDTO>(rol);
+        }
     }
 }

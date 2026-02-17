@@ -1,9 +1,13 @@
 ﻿using API_SSO.Context;
 using API_SSO.DTO;
+using API_SSO.DTOs;
 using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace API_SSO.Procesos
 {
@@ -11,11 +15,15 @@ namespace API_SSO.Procesos
     {
         private readonly IRolService<SSOContext> _service;
         private readonly RoleManager<IdentityRole> _RolManager;
+        private readonly UserManager<IdentityUser> _userManager;
+        private readonly SSOContext _ssoContext;
 
-        public RolProceso(IRolService<SSOContext> service, RoleManager<IdentityRole> roleManager)
+        public RolProceso(IRolService<SSOContext> service, RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, SSOContext ssoContext)
         {
             _service = service;
             _RolManager = roleManager;
+            _userManager = userManager;
+            _ssoContext = ssoContext;
         }
 
         public async Task<RolDTO> CrearRol(RolCreacionDTO rol)
@@ -110,6 +118,49 @@ namespace API_SSO.Procesos
             respuesta.Estatus = true;
             respuesta.Descripcion = "Rol editado exitosamente.";
             return respuesta;
+        }
+
+        public async Task<List<RolDTO>> ObtenerXEmpresa(int IdEmpresa)
+        {
+            var lista = await _service.ObtenerTodos();
+            lista = lista.Where(r => r.IdEmpresa == IdEmpresa).ToList();
+            return lista;
+        }
+
+        public async Task<RolDTO> ObtenerRolXUsuarioXEmpresa(IdentityUser usuario, int IdEmpresa)
+        {
+            var sqlquery = @"
+                SELECT r.Id, 
+                r.FechaRegistro, 
+                r.Descripcion, 
+                r.Color, 
+                r.IdEmpresa, 
+                r.DeSistema, 
+                r.General, 
+                r.Activo, 
+                a.Id as IdAspNetRole, 
+                a.Name, 
+                ar.UserId 
+                FROM Rol r 
+                INNER JOIN AspNetRoles a ON r.IdAspNetRole = a.Id 
+                INNER JOIN AspNetUserRoles ar ON ar.RoleId = a.Id where UserId = @UserId
+                for json path
+                ";
+            var lista = await _ssoContext.Database
+                .SqlQueryRaw<string>(sqlquery, new Microsoft.Data.SqlClient.SqlParameter("@UserId", usuario.Id))
+                .ToListAsync();
+            if (lista.Count <= 0)
+            {
+                return new RolDTO();
+            }
+            string json = string.Join("", lista);
+            var datos = JsonSerializer.Deserialize<List<RolDTO>>(json);
+            if(datos == null)
+            {
+                return new RolDTO(); 
+            }
+            var rolAsignado = datos.First(r => r.IdEmpresa == IdEmpresa);
+            return rolAsignado;
         }
     }
 }
