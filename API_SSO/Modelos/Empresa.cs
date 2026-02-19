@@ -24,6 +24,10 @@ public partial class Empresa
 
     public int? DiaPago { get; set; }
 
+    public string? Ciudad { get; set; }
+
+    public string? Domicilio { get; set; }
+
     public virtual ICollection<ComprobantePago> ComprobantePagos { get; set; } = new List<ComprobantePago>();
 
     public virtual ICollection<EmpresaXcliente> EmpresaXclientes { get; set; } = new List<EmpresaXcliente>();

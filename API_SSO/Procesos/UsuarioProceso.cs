@@ -136,6 +136,8 @@ namespace API_SSO.Procesos
                 {
                     var rol = await _RoleManager.FindByIdAsync(rolAsignado.IdAspNetRole);
                     zvClaims.Add(new Claim("role", rol.Name));
+                    var RolClaims = await _RoleManager.GetClaimsAsync(rol);
+                    zvClaims.AddRange(RolClaims);
                 }
 
             }
@@ -389,6 +391,16 @@ namespace API_SSO.Procesos
             return respuesta;
         }
 
-        
+        public async Task<UsuarioDTO> ObtenerUsuarioXId(string id)
+        {
+            var user = await _UserManager.FindByIdAsync(id);
+            UsuarioDTO usuario = new UsuarioDTO
+            {
+                Nombre = user.UserName,
+                Correo = user.Email,
+                Id = user.Id
+            };
+            return usuario;
+        }
     }
 }

@@ -16,9 +16,13 @@
 
         public bool? Eliminado { get; set; }
 
-        public string Sociedad { get; set; } = null!;
+        public string Sociedad { get; set; }
 
         public int? DiaPago { get; set; }
+
+        public string? Ciudad { get; set; }
+
+        public string? Domicilio { get; set; }
     }
 
     public class EmpresaCreacionDTO: EmpresaDTO

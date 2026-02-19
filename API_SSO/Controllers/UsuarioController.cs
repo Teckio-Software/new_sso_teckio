@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using static API_SSO.Controllers.ProyectoActualController;
 
 namespace API_SSO.Controllers
 {
@@ -109,6 +110,13 @@ namespace API_SSO.Controllers
             }
             zCredenciales.Email = usernameClaim;
             return await _usuarioProceso.ConstruirToken(zCredenciales);
+        }
+
+        [HttpPost("obtenUsuario")]
+        public async Task<ActionResult<UsuarioDTO>> obtenUsuario(IdUsuario parametros)
+        {
+            var resultado = await _usuarioProceso.ObtenerUsuarioXId(parametros.id);
+            return resultado;
         }
     }
 }
