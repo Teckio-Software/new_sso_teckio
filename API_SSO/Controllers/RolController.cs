@@ -42,5 +42,14 @@ namespace API_SSO.Controllers
             var lista = await _proceso.ObtenerXEmpresa(idEmpresa, authen.Claims.ToList());
             return lista;
         }
+
+        [HttpGet("ObtenerClaimsXRol/{idRol:int}")]
+        [Authorize]
+        public async Task<ActionResult<List<RoleClaimViewModel>>> ObtenerClaimsXRol(int idRol)
+        {
+            var authen = HttpContext.User;
+            var lista = await _proceso.ObtenerClaimsXRol(idRol, authen.Claims.ToList());
+            return lista;
+        }
     }
 }

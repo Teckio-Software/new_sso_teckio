@@ -128,5 +128,13 @@ namespace API_SSO.Controllers
             var respuesta = await _usuarioProceso.ReestableceContrasenia(objeto, HttpContext.User.Claims.ToList());
             return respuesta;
         }
+
+        [HttpPost("RespuestaFront")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<ActionResult> RespuestaFront()
+        {
+            //var authen = HttpContext.User;
+            return NoContent();
+        }
     }
 }

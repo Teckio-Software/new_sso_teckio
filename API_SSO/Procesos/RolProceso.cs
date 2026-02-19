@@ -5,6 +5,7 @@ using API_SSO.Modelos;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
@@ -194,6 +195,40 @@ namespace API_SSO.Procesos
             }
             var rolAsignado = datos.First(r => r.IdEmpresa == IdEmpresa);
             return rolAsignado;
+        }
+
+        public async Task<List<RoleClaimViewModel>> ObtenerClaimsXRol(int idRol, List<Claim> claims)
+        {
+            var claimsRegistro = new List<RoleClaimViewModel>();
+            var idUs = claims.First(c => c.Type == "guid")?.Value;
+            if(idUs == null)
+            {
+                return claimsRegistro;
+            }
+            var rol = await _service.ObtenerXId(idRol);
+            if (rol.Id <= 0)
+            {
+                await _logProceso.CrearLog(idUs, "Proceso", "ObtenerClaimsXRol", $"No se encontró el rol con el Id: {idRol}");
+                return claimsRegistro;
+            }
+            var rolIdentity = await _RolManager.FindByIdAsync(rol.IdAspNetRole);
+            if(rolIdentity == null)
+            {
+                return claimsRegistro;
+            }
+            var claimsObtenidos = await _RolManager.GetClaimsAsync(rolIdentity);
+            foreach(var claim in claimsObtenidos)
+            {
+                RoleClaimViewModel claimObjeto = new RoleClaimViewModel
+                {
+                    Type = claim.Type,
+                    Value = claim.Value,
+                    Selected = true
+                };
+                claimsRegistro.Add(claimObjeto);
+            }
+            await _logProceso.CrearLog(idUs, "Proceso", "ObtenerClaimsXRol",$"Se obtuvierón {claimsRegistro} registros de claims para el rol con el Id: {idRol}");
+            return claimsRegistro;
         }
     }
 }
