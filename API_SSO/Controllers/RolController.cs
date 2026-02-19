@@ -20,7 +20,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<RolDTO>> CrearRol(RolCreacionDTO rol)
         {
-            var resultado = await _proceso.CrearRol(rol);
+            var authen = HttpContext.User;
+            var resultado = await _proceso.CrearRol(rol, authen.Claims.ToList());
             return resultado;
         }
 
@@ -28,7 +29,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<RespuestaDTO>> EditarRol(RolEdicionDTO rol)
         {
-            var resultado = await _proceso.EditarRol(rol);
+            var authen = HttpContext.User;
+            var resultado = await _proceso.EditarRol(rol, authen.Claims.ToList());
             return resultado;
         }
 
@@ -36,7 +38,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<List<RolDTO>>> ObtenerRolesXEmpresa(int idEmpresa)
         {
-            var lista = await _proceso.ObtenerXEmpresa(idEmpresa);
+            var authen = HttpContext.User;
+            var lista = await _proceso.ObtenerXEmpresa(idEmpresa, authen.Claims.ToList());
             return lista;
         }
     }

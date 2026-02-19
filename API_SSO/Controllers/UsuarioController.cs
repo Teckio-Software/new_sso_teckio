@@ -33,7 +33,8 @@ namespace API_SSO.Controllers
         [HttpPost("asignarRol")]
         public async Task<ActionResult<RespuestaDTO>> AsignarRol(UsuarioRolDTO rol)
         {
-            var resultado = await _usuarioProceso.AsignarRol(rol);
+            var authen = HttpContext.User;
+            var resultado = await _usuarioProceso.AsignarRol(rol, authen.Claims.ToList());
             return resultado;
         }
 
@@ -43,11 +44,11 @@ namespace API_SSO.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> EnviarEmailRecuperacion([FromBody] EnviarEmailRecuperacionDTO enviarEmailRecuperacionDTO, CancellationToken ct)
         {
+            var authen = HttpContext.User;
             if (string.IsNullOrWhiteSpace(enviarEmailRecuperacionDTO.Email))
             {
                 return BadRequest(new { ok = false, message = "Email requerido" });
             }
-
             await _usuarioProceso.EnviarEmailRecuperacion(enviarEmailRecuperacionDTO.Email, ct);
             return Ok(new { ok = true });
         }
@@ -57,6 +58,7 @@ namespace API_SSO.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<RespuestaDTO>> RestablecerContrasena(RecuperacionContrasenaDTO objeto, CancellationToken ct)
         {
+            var authen = HttpContext.User;
             var resultado = await _usuarioProceso.RestablecerContrasena(objeto, ct);
             return resultado;
         }
@@ -115,8 +117,16 @@ namespace API_SSO.Controllers
         [HttpPost("obtenUsuario")]
         public async Task<ActionResult<UsuarioDTO>> obtenUsuario(IdUsuario parametros)
         {
-            var resultado = await _usuarioProceso.ObtenerUsuarioXId(parametros.id);
+            var authen = HttpContext.User;
+            var resultado = await _usuarioProceso.ObtenerUsuarioXId(parametros.id, authen.Claims.ToList());
             return resultado;
+        }
+
+        [HttpPost("reestableceContrasenia")]
+        public async Task<ActionResult<RespuestaDTO>> CambiarContrasenia(CambiarContraseniaDTO objeto)
+        {
+            var respuesta = await _usuarioProceso.ReestableceContrasenia(objeto, HttpContext.User.Claims.ToList());
+            return respuesta;
         }
     }
 }

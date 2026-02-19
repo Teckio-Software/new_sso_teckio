@@ -20,14 +20,16 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<RespuestaDTO>> CrearEmpresa([FromBody] EmpresaCreacionDTO empresaDTO, CancellationToken ct)
         {
-            var respuesta = await _empresaProceso.CrearEmpresa(empresaDTO, ct);
+            var authen = HttpContext.User;
+            var respuesta = await _empresaProceso.CrearEmpresa(empresaDTO, authen.Claims.ToList(), ct);
             return respuesta;
         }
 
         [HttpGet("obtenerXIdCliente/{idCliente:int}")]
         public async Task<ActionResult<List<EmpresaDTO>>> ObtenerXIdCliente(int idCliente)
         {
-            var lista = await _empresaProceso.ObtenerEmpresasXCliente(idCliente);
+            var authen = HttpContext.User;
+            var lista = await _empresaProceso.ObtenerEmpresasXCliente(idCliente, authen.Claims.ToList());
             return lista;
         }
 

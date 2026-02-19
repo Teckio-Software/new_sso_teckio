@@ -31,6 +31,7 @@ namespace API_SSO.Procesos
         private readonly IUsuarioxEmpresaService<SSOContext> _usuarioxEmpresaService;
         private readonly IEmpresaXclienteService<SSOContext> _empresaxClienteService;
         private readonly RoleManager<IdentityRole> _RolManager;
+        private readonly LogProceso _logProceso;
 
         public ClienteProceso(UserManager<IdentityUser> usuarioManager, 
             IEmpresaService<SSOContext> empresaService, 
@@ -42,7 +43,8 @@ namespace API_SSO.Procesos
             IEmailService email, 
             IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService, 
             IEmpresaXclienteService<SSOContext> empresaxClienteService,
-            RoleManager<IdentityRole> RolManager
+            RoleManager<IdentityRole> RolManager,
+            LogProceso logProceso
             )
         {
             _UsuarioManager = usuarioManager;
@@ -57,11 +59,13 @@ namespace API_SSO.Procesos
             _usuarioxEmpresaService = usuarioxEmpresaService;
             _empresaxClienteService = empresaxClienteService;
             _RolManager = RolManager;
+            _logProceso = logProceso;
         }
 
-        public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion, CancellationToken ct)
+        public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion, List<Claim> claims, CancellationToken ct)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var idEjecutor = claims.First(c => c.Type == "guid")?.Value;
             //Primero verifica que el correo, nombre y contraseña no estén vacíos
             if (
                 string.IsNullOrEmpty(clienteCreacion.CorreoElectronico)
@@ -179,7 +183,7 @@ namespace API_SSO.Procesos
                 foreach (var rol in clienteCreacion.roles)
                 {
                     rol.IdEmpresa = empresaCreada.Id;
-                    var rolCreado = await _rolProceso.CrearRol(rol);
+                    var rolCreado = await _rolProceso.CrearRol(rol, claims);
                     roles.Add(new RolCreacionDTO
                     {
                         Id = rolCreado.Id,
@@ -221,6 +225,7 @@ namespace API_SSO.Procesos
                     await _usuarioxEmpresaService.CrearYObtener(relacion);
                 }
                 await transaction.CommitAsync(ct);
+                await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuario", $"Se creó el usuario {usuarioCreado.UserName} con el rol de cliente y la empresa {empresaCreada.NombreComercial}.");
                 respuesta.Estatus = true;
                 respuesta.Descripcion = "Tour completo exitosamente.";
             }
@@ -228,19 +233,17 @@ namespace API_SSO.Procesos
     {
                 // Si algo falla, se deshacen los cambios en la BD principal (SSO/Identity)
                 await transaction.RollbackAsync(ct);
-
+                await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuario", $"Ocurrió un error al intentar crear el usuario {ex.Message}.");
                 respuesta.Estatus = false;
                 respuesta.Descripcion = $"Error en el proceso: {ex.Message}";
-
-                // TODO: Aquí deberías considerar un proceso de "Limpieza" manual 
-                // por si la base de datos física alcanzó a crearse pero el commit falló.
             }
             return respuesta;
         }
 
-        public async Task<RespuestaDTO> CrearCliente(ClienteConComprobanteDTO informacion, List<System.Security.Claims.Claim> claims, CancellationToken ct)
+        public async Task<RespuestaDTO> CrearCliente(ClienteConComprobanteDTO informacion, List<Claim> claims, CancellationToken ct)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var idEjecutor = claims.First(c => c.Type == "guid")?.Value;
             //Primero verifica que el correo, razón social y el comprobante no estén vacíos
             if (
                 string.IsNullOrEmpty(informacion.Correo)
@@ -302,18 +305,21 @@ namespace API_SSO.Procesos
             catch (Exception ex)
             {
                 await transaction.RollbackAsync(ct);
+                await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearCliente", $"Error al crear cliente: {ex.Message}");
                 respuesta.Estatus = false;
                 respuesta.Descripcion = ex.Message;
                 return respuesta;
             }
             await transaction.CommitAsync(ct);
+            await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearCliente", $"Se creó el cliente {cliente.RazonSocial}.");
             respuesta.Estatus = true;
             respuesta.Descripcion = "Operación completada exitosamente.";
             return respuesta;
         }
 
-        public async Task<List<ClienteDTO>> ObtenerTodos()
+        public async Task<List<ClienteDTO>> ObtenerTodos(List<Claim> claims)
         {
+            var idUsuario = claims.First(c => c.Type == "guid")?.Value;
             var lista = _dbContext.Database.SqlQueryRaw<string>(""""
                 SELECT C.Id
                     ,[RazonSocial]
@@ -335,6 +341,7 @@ namespace API_SSO.Procesos
             }
             string json = string.Join("", lista);
             var datos = JsonSerializer.Deserialize<List<ClienteDTO>>(json);
+            await _logProceso.CrearLog(idUsuario, "Proceso", "ObtenerTodosClientes", $"Se obtuvieron {datos.Count} clientes.");
             return datos;
         }
 
@@ -387,6 +394,7 @@ namespace API_SSO.Procesos
         public async Task<RespuestaDTO> EditarCliente(ClienteDTO cliente, List<System.Security.Claims.Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var idUsuario = claims.First(c => c.Type == "guid")?.Value;
             var clienteExistente = await _clienteService.ObtenerXId(cliente.Id);
             if (clienteExistente.Id <= 0)
             {
@@ -401,12 +409,27 @@ namespace API_SSO.Procesos
             clienteExistente.PagoXempresa = cliente.PagoXempresa;
             clienteExistente.CorreoConfirmed = cliente.CorreoConfirmed;
             respuesta = await _clienteService.Editar(cliente);
+            if(respuesta.Estatus)
+            {
+                await _logProceso.CrearLog(idUsuario,"Proceso", "EditarCliente","Se edito el cliente correctamente.");
+            }
+            else
+            {
+                await _logProceso.CrearLog(idUsuario,"Proceso", "EditarCliente",respuesta.Descripcion);
+            }
             return respuesta;
         }
 
-        public async Task<ClienteDTO> ObtenerClienteXId(int id)
+        public async Task<ClienteDTO> ObtenerClienteXId(int id, List<Claim> claims)
         {
+            var idUsuario = claims.First(c => c.Type == "guid")?.Value;
             var cliente = await _clienteService.ObtenerXId(id);
+            if(cliente.Id <= 0)
+            {
+                await _logProceso.CrearLog(idUsuario, "Proceso", "ObtenerClienteXId", $"No se encontró el cliente con id {id}");
+                return new ClienteDTO();
+            }
+            await _logProceso.CrearLog(idUsuario, "Proceso", "ObtenerClienteXId", $"Se obtuvo el cliente con id {id}");
             return cliente;
         }
     }

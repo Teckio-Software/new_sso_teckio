@@ -2,6 +2,7 @@
 using API_SSO.DTO;
 using API_SSO.Servicios.Contratos;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace API_SSO.Procesos
 {
@@ -24,9 +25,16 @@ namespace API_SSO.Procesos
             _logProceso = logProceso;
         }
 
-        public async Task<RespuestaDTO> CrearEmpresa(EmpresaCreacionDTO empresa, CancellationToken ct)
+        public async Task<RespuestaDTO> CrearEmpresa(EmpresaCreacionDTO empresa, List<Claim> claims, CancellationToken ct)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var IdUs = claims.Find(c=>c.Type == "guid")?.Value;
+            if (IdUs == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "La información del usuario es inconsistente.";
+                return respuesta;
+            }
             //Crea el modelo de la empresa, inicialmente con su propio día de pago
             EmpresaDTO modelo = new EmpresaDTO
             {
@@ -44,6 +52,7 @@ namespace API_SSO.Procesos
             var relaciones = await _empresaXClienteService.ObtenerPorIdCliente(empresa.IdCliente);
             if (relaciones.Count <= 0)
             {
+                await _logProceso.CrearLog(IdUs, "Proceso", "CrearEmpresa", $"El cliente {empresa.IdCliente} no tiene empresas relacionadas, por lo que no se puede determinar el día de pago");
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "Ocurrió un problema al obtener la información del cliente";
                 return respuesta;
@@ -98,12 +107,14 @@ namespace API_SSO.Procesos
             }
             catch(Exception ex)
             {
+                await _logProceso.CrearLog(IdUs, "Proceso", "CrearEmpresa", $"Ocurrió un error al intentar crear la empresa: {ex.Message}");
                 await transaction.RollbackAsync(ct);
                 respuesta.Estatus = false;
                 respuesta.Descripcion = ex.Message;
                 return respuesta;
             }
             await transaction.CommitAsync(ct);
+            await _logProceso.CrearLog(IdUs, "Proceso", "CrearEmpresa", $"Empresa creada exitosamente con el id {empresa.Id}");
             respuesta.Estatus = true;
             respuesta.Descripcion = "Empresa creada correctamente.";
             return respuesta;
@@ -123,18 +134,23 @@ namespace API_SSO.Procesos
             respuesta = await _EmpresaService.Editar(empresaDTO);
             if (respuesta.Estatus)
             {
-                await _logProceso.CrearLog(IdUsuario, "EditarEmpresa", "Proceso", "Empresa editada exitosamente");
+                await _logProceso.CrearLog(IdUsuario, "Proceso", "EditarEmpresa", "Empresa editada exitosamente");
             }
             else
             {
-                await _logProceso.CrearLog(IdUsuario, "EditarEmpresa", "Proceso", "Ocurrió un error al intentar editar la empresa");
+                await _logProceso.CrearLog(IdUsuario, "Proceso", "EditarEmpresa", "Ocurrió un error al intentar editar la empresa");
             }
             return respuesta;
         }
 
-        public async Task<List<EmpresaDTO>> ObtenerEmpresasXCliente(int idCliente)
+        public async Task<List<EmpresaDTO>> ObtenerEmpresasXCliente(int idCliente, List<Claim> claims)
         {
             List<EmpresaDTO> lista = new List<EmpresaDTO>();
+            var idUs = claims.Find(c => c.Type == "guid")?.Value;
+            if(idUs == null)
+            {
+                return new List<EmpresaDTO>();
+            }
             var relaciones = await _empresaXClienteService.ObtenerPorIdCliente(idCliente);
             foreach(var item in relaciones)
             {
@@ -144,6 +160,7 @@ namespace API_SSO.Procesos
                     lista.Add(empresa);
                 }
             }
+            await _logProceso.CrearLog(idUs, "Proceso", "ObtenerEmpresasXCliente", $"Se obtuvieron {lista.Count} empresas para el cliente {idCliente}");
             return lista;
         }
     }

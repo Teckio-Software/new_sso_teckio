@@ -31,7 +31,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<List<ComprobantePagoDTO>>> ObtenerTodos()
         {
-            var lista = await _proceso.ObtenerTodos();
+            var authen = HttpContext.User;
+            var lista = await _proceso.ObtenerTodos(authen.Claims.ToList());
             return lista;
         }
 
@@ -39,7 +40,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<List<ComprobantePagoDTO>>> ObtenerXIdCliente(int idCliente)
         {
-            var lista = await _proceso.ObtenerXIdCliente(idCliente);
+            var authen = HttpContext.User;
+            var lista = await _proceso.ObtenerXIdCliente(idCliente, authen.Claims.ToList());
             return lista;
         }
 
@@ -47,7 +49,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<RespuestaDTO>> CancelarComprobante(int idComprobante)
         {
-            var resultado = await _proceso.CancelaComprobantePago(idComprobante);
+            var authen = HttpContext.User;
+            var resultado = await _proceso.CancelaComprobantePago(idComprobante, authen.Claims.ToList());
             return resultado;  
         }
 

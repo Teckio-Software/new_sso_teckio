@@ -21,7 +21,7 @@ namespace API_SSO.Controllers
         public async Task<ActionResult<RespuestaDTO>> CrearUsuario(ClienteCreacionDTO cliente, CancellationToken ct)
         {
             var authen = HttpContext.User;
-            var respuesta = await _proceso.CrearUsuario(cliente, ct);
+            var respuesta = await _proceso.CrearUsuario(cliente, authen.Claims.ToList(), ct);
             return respuesta;
         }
 
@@ -38,7 +38,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<List<ClienteDTO>>> ObtenerTodos()
         {
-            var lista = await _proceso.ObtenerTodos();
+            var authen = HttpContext.User;
+            var lista = await _proceso.ObtenerTodos(authen.Claims.ToList());
             return lista;
         }
 
@@ -46,7 +47,8 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<ClienteDTO>> ObtenerXId(int idCliente)
         {
-            var resultado = await _proceso.ObtenerClienteXId(idCliente);
+            var authen = HttpContext.User;
+            var resultado = await _proceso.ObtenerClienteXId(idCliente, authen.Claims.ToList());
             return resultado;
         }
 

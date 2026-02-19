@@ -25,6 +25,7 @@ namespace API_SSO.Procesos
         private readonly SSOContext _db;
         private readonly IInvitacionService _invitacionService;
         private readonly IProyectoActualServce<SSOContext> _proyectoActualServce;
+        private readonly LogProceso _logProceso;
         public UsuarioProceso(UserManager<IdentityUser> userManager, 
             SignInManager<IdentityUser> signInManager, 
             IConfiguration configuracion, 
@@ -33,7 +34,8 @@ namespace API_SSO.Procesos
             RolProceso rolProceso, 
             SSOContext db, 
             IInvitacionService invitacionService,
-            IProyectoActualServce<SSOContext> proyectoActualServce
+            IProyectoActualServce<SSOContext> proyectoActualServce,
+            LogProceso logProceso
             )
         {
             _UserManager = userManager;
@@ -45,6 +47,7 @@ namespace API_SSO.Procesos
             _db = db;
             _invitacionService = invitacionService;
             _proyectoActualServce = proyectoActualServce;
+            _logProceso = logProceso;
         }
 
         public async Task<IdentityUser> ObtenerUsuario(string parametro)
@@ -166,9 +169,10 @@ namespace API_SSO.Procesos
             };
         }
 
-        public async Task<RespuestaDTO> AsignarRol(UsuarioRolDTO objeto)
+        public async Task<RespuestaDTO> AsignarRol(UsuarioRolDTO objeto, List<Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var IdUs = claims.First(c => c.Type == "guid")?.Value;
             var usuario = await _UserManager.FindByIdAsync(objeto.IdUsuario);
             if (string.IsNullOrEmpty(usuario.Id))
             {
@@ -199,6 +203,7 @@ namespace API_SSO.Procesos
                 }
                 else
                 {
+                    await _logProceso.CrearLog(IdUs, "Proceso", "AsignarRol", $"Intentó asignar un rol a un usuario pero no se encontró el rol actual asignado (IdUsuario: {usuario.Id}, IdEmpresa: {objeto.IdEmpresa}).");
                     respuesta.Descripcion = "No se encontró el rol.";
                     respuesta.Estatus = false;
                     return respuesta;
@@ -209,11 +214,13 @@ namespace API_SSO.Procesos
             var asignacion = await _UserManager.AddToRoleAsync(usuario, rol.Name);
             if (asignacion.Succeeded)
             {
+                await _logProceso.CrearLog(IdUs, "Proceso", "AsignarRol", $"Asignó el rol {rol.Name} al usuario {usuario.UserName} ({usuario.Email}) en la empresa con Id {objeto.IdEmpresa}.");
                 respuesta.Estatus = true;
                 respuesta.Descripcion = "Rol asignado exitosamente.";
             }
             else
             {
+                await _logProceso.CrearLog(IdUs, "Proceso", "AsignarRol", $"Ocurrió un error al intentar asignar el rol {rol.Name} al usuario {usuario.UserName} ({usuario.Email}) en la empresa con Id {objeto.IdEmpresa}.");
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "Ocurrió un problema al intentar asignar el rol.";
             }
@@ -322,6 +329,14 @@ namespace API_SSO.Procesos
             var cambio = await _UserManager.ResetPasswordAsync(usuario, decodedToken, objeto.NuevaContrasena);
             respuesta.Estatus = cambio.Succeeded;
             respuesta.Descripcion = respuesta.Estatus ? "Contraseña actualizada exitosamente." : "No fue posible cambiar la contraseña.";
+            if (respuesta.Estatus)
+            {
+                await _logProceso.CrearLog(usuario.Id, "Proceso", "RestablecerContrasena", $"El usuario restableció su contraseña.");
+            }
+            else
+            {
+                await _logProceso.CrearLog(usuario.Id, "Proceso", "RestablecerContrasena", $"Ocurrió un error al intentar restablecer la contraseña.");
+            }
             return respuesta;
         }
 
@@ -391,8 +406,13 @@ namespace API_SSO.Procesos
             return respuesta;
         }
 
-        public async Task<UsuarioDTO> ObtenerUsuarioXId(string id)
+        public async Task<UsuarioDTO> ObtenerUsuarioXId(string id, List<Claim> claims)
         {
+            var IdUs = claims.First(c => c.Type == "guid")?.Value;
+            if(IdUs == null)
+            {
+                return new UsuarioDTO();
+            }
             var user = await _UserManager.FindByIdAsync(id);
             UsuarioDTO usuario = new UsuarioDTO
             {
@@ -400,7 +420,71 @@ namespace API_SSO.Procesos
                 Correo = user.Email,
                 Id = user.Id
             };
+            if (string.IsNullOrEmpty(usuario.Id))
+            {
+                await _logProceso.CrearLog(IdUs, "Proceso", "ObtenerUsuarioXId", $"Intentó obtener la información de un usuario que no existe (Id: {id}).");
+            }
+            else
+            {
+                await _logProceso.CrearLog(IdUs, "Proceso", "ObtenerUsuarioXId", $"Obtuvo la información del usuario {usuario.Nombre} ({usuario.Correo}).");
+            }
             return usuario;
+        }
+
+        public async Task<RespuestaDTO> ReestableceContrasenia(CambiarContraseniaDTO parametros, List<Claim> claims)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var idEjecutor = claims.First(c => c.Type == "guid")?.Value;
+            if(idEjecutor == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "No se pudo identificar al usuario que ejecuta la acción.";
+                return respuesta;
+            }
+            var role = claims.First(c => c.Type == ClaimTypes.Role)?.Value;
+            if (role == "Administrador")
+            {
+                if (string.IsNullOrEmpty(parametros.IdUsuario)
+                || string.IsNullOrEmpty(parametros.NuevaContrasenia)
+                || string.IsNullOrEmpty(parametros.NuevaContraseniaConfirma))
+                {
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "Capture todos los campos";
+                    return respuesta;
+                }
+                if(parametros.NuevaContrasenia != parametros.NuevaContraseniaConfirma)
+                {
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "Las contraseñas no coinciden";
+                    return respuesta;
+                }
+                var user = await _UserManager.FindByIdAsync(parametros.IdUsuario);
+                if (user == null)
+                {
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "No se encontró el usuario.";
+                    return respuesta;
+                }
+                await _UserManager.RemovePasswordAsync(user);
+                var resultado = await _UserManager.AddPasswordAsync(user, parametros.NuevaContrasenia);
+                if (resultado.Succeeded)
+                {
+                    await _logProceso.CrearLog(idEjecutor, "Proceso", "ReestableceContrasenia", $"Reestableció la contraseña del usuario {user.UserName} ({user.Email})");
+                    respuesta.Estatus = true;
+                    respuesta.Descripcion = "Contraseña reestablecida exitosamente.";
+                }
+                else
+                {
+                    await _logProceso.CrearLog(idEjecutor, "Proceso", "ReestableceContrasenia", $"Ocurrió un error al intentar reestablecer la contraseña del usuario {user.UserName} ({user.Email})");
+                    respuesta.Estatus = false;
+                    respuesta.Descripcion = "Ocurrió un error al intentar reestablecer la contraseña.";
+                }
+                return respuesta;
+            }
+            await _logProceso.CrearLog(idEjecutor, "Proceso", "ReestableceContrasenia", $"Intentó reestablecer la contraseña de un usuario sin tener permisos para ello.");
+            respuesta.Estatus = false;
+            respuesta.Descripcion = "El usuairo no cuenta con permisos para realizar esta acción.";
+            return respuesta;
         }
     }
 }

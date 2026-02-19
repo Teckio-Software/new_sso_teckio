@@ -17,17 +17,23 @@ namespace API_SSO.Procesos
         private readonly RoleManager<IdentityRole> _RolManager;
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SSOContext _ssoContext;
-
-        public RolProceso(IRolService<SSOContext> service, RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, SSOContext ssoContext)
+        private readonly LogProceso _logProceso;
+        public RolProceso(IRolService<SSOContext> service, RoleManager<IdentityRole> roleManager, UserManager<IdentityUser> userManager, SSOContext ssoContext, LogProceso logProceso)
         {
             _service = service;
             _RolManager = roleManager;
             _userManager = userManager;
             _ssoContext = ssoContext;
+            _logProceso = logProceso;
         }
 
-        public async Task<RolDTO> CrearRol(RolCreacionDTO rol)
+        public async Task<RolDTO> CrearRol(RolCreacionDTO rol, List<Claim> claims)
         {
+            var IdUs = claims.Find(c => c.Type == "guid")?.Value;
+            if(IdUs == null)
+            {
+                return new RolDTO();
+            }
             var nombreRol = rol.Nombre + "-" + rol.IdEmpresa;
             var nuevoRolIdentity = new IdentityRole
             {
@@ -70,12 +76,27 @@ namespace API_SSO.Procesos
             {
                 await _RolManager.AddClaimAsync(identityRol, new Claim(claim.Type, claim.Value));
             }
+            if (rolCreado.Id <= 0)
+            {
+                await _logProceso.CrearLog(IdUs, "Proceso", "CrearRol", $"Ocurrió un error al intentar crear el rol para la empresa con Id: {rol.IdEmpresa}");
+            }
+            else
+            {
+                await _logProceso.CrearLog(IdUs, "Proceso", "CrearRol", $"Se creó el rol con Id: {rolCreado.Id} exitosamente.");
+            }
             return rolCreado;
         }
 
-        public async Task<RespuestaDTO> EditarRol(RolEdicionDTO objeto)
+        public async Task<RespuestaDTO> EditarRol(RolEdicionDTO objeto, List<Claim> claimsParam)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var IdUs = claimsParam.Find(c => c.Type == "guid")?.Value;
+            if(IdUs == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "No se encontró el usuario en los claims.";
+                return respuesta;
+            }
             RolDTO modelo = new RolDTO
             {
                 Descripcion = objeto.rol.Descripcion,
@@ -88,10 +109,13 @@ namespace API_SSO.Procesos
             respuesta = await _service.Editar(modelo);
             if (!respuesta.Estatus)
             {
+                await _logProceso.CrearLog(IdUs, "Proceso", "EditarRol", $"Ocurrió un error al intentar editar el rol con Id: {modelo.Id}");
                 return respuesta;
             }
             if (objeto.rol.IdAspNetRole == null)
             {
+
+                await _logProceso.CrearLog(IdUs, "Proceso", "EditarRol", $"Ocurrió un error al intentar editar el rol con Id: {modelo.Id}, No tiene Id del rol de AspNet.");
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "Ocurrió un error al intentar editar el rol";
                 return respuesta;
@@ -99,6 +123,8 @@ namespace API_SSO.Procesos
             var identityRole = await _RolManager.FindByIdAsync(modelo.IdAspNetRole);
             if (identityRole == null)
             {
+
+                await _logProceso.CrearLog(IdUs, "Proceso", "EditarRol", $"Ocurrió un error al intentar editar el rol con Id: {modelo.Id}, no se encontro el rol de AspNet.");
                 respuesta.Estatus = false;
                 respuesta.Descripcion = "No se encontró el rol";
                 return respuesta;
@@ -115,15 +141,22 @@ namespace API_SSO.Procesos
             {
                 await _RolManager.AddClaimAsync(identityRole, new Claim(claim.Type, claim.Value));
             }
+            await _logProceso.CrearLog(IdUs, "Proceso", "EditarRol", $"Se editó el rol con Id: {modelo.Id} exitosamente.");
             respuesta.Estatus = true;
             respuesta.Descripcion = "Rol editado exitosamente.";
             return respuesta;
         }
 
-        public async Task<List<RolDTO>> ObtenerXEmpresa(int IdEmpresa)
+        public async Task<List<RolDTO>> ObtenerXEmpresa(int IdEmpresa, List<Claim> claims)
         {
+            var idUs = claims.Find(c => c.Type == "guid")?.Value;
+            if(idUs == null)
+            {
+                return new List<RolDTO>();
+            }
             var lista = await _service.ObtenerTodos();
             lista = lista.Where(r => r.IdEmpresa == IdEmpresa).ToList();
+            await _logProceso.CrearLog(idUs, "Proceso", "ObtenerXEmpresa", $"Se obtuvieron {lista.Count} registros de roles para la empresa con el Id: {IdEmpresa}");
             return lista;
         }
 

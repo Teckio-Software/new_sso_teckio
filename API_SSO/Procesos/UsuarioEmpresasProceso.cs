@@ -13,18 +13,24 @@ namespace API_SSO.Procesos
         private readonly UserManager<IdentityUser> _UserManager;
         private readonly RolProceso _rolProceso;
         private readonly RoleManager<IdentityRole> _roleManager;
-
-        public UsuarioEmpresasProceso(IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService, IEmpresaService<SSOContext> empresaService, UserManager<IdentityUser> userManager, RolProceso rolProceso, RoleManager<IdentityRole> roleManager)
+        private readonly LogProceso _logProceso;
+        public UsuarioEmpresasProceso(IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService, IEmpresaService<SSOContext> empresaService, UserManager<IdentityUser> userManager, RolProceso rolProceso, RoleManager<IdentityRole> roleManager, LogProceso logProceso)
         {
             _usuarioxEmpresaService = usuarioxEmpresaService;
             _empresaService = empresaService;
             _UserManager = userManager;
             _rolProceso = rolProceso;
             _roleManager = roleManager;
+            _logProceso = logProceso;
         }
 
-        public async Task<List<EmpresaDTO>> ObtenerEmpresasXUsuario(string idUsuario)
+        public async Task<List<EmpresaDTO>> ObtenerEmpresasXUsuario(string idUsuario, List<Claim> claims)
         {
+            var IdUs = claims.Find(c => c.Type == "guid")?.Value;
+            if (IdUs == null)
+            {
+                return new List<EmpresaDTO>();
+            }
             var relaciones = await _usuarioxEmpresaService.ObtenerXIdUsuario(idUsuario);
             List<EmpresaDTO> empresas = new List<EmpresaDTO>();
             foreach (var relacion in relaciones)
@@ -32,7 +38,7 @@ namespace API_SSO.Procesos
                 var empresa = await _empresaService.ObtenerXId(relacion.IdEmpresa);
                 empresas.Add(empresa);
             }
-
+            await _logProceso.CrearLog(IdUs, "Proceso", "ObtenerEmpresasXUsuario", $"Se obtuvierón {empresas.Count} registros de empresas.");
             return empresas;
         }
 
@@ -50,7 +56,7 @@ namespace API_SSO.Procesos
                 var empresa = await _empresaService.ObtenerXId(relacion.IdEmpresa);
                 empresas.Add(empresa);
             }
-
+            await _logProceso.CrearLog(idUsuario, "Proceso", "ObtenerEmpresasPerteneciente", $"Se obtuvierón {empresas.Count} registros de empresas");
             return empresas;
         }
 
@@ -81,7 +87,7 @@ namespace API_SSO.Procesos
                 };
                 registros.Add(registro);
             }
-
+            await _logProceso.CrearLog(idUsuarioAdmin, "Proceso", "ObtenerEmpresasPertenecientePorUsuario", $"Se obtuvieron {registros.Count} registros de Empresa por usuario");
             return registros;
         }
 
@@ -120,12 +126,20 @@ namespace API_SSO.Procesos
                 };
                 usuarios.Add(usuario);
             }
+            await _logProceso.CrearLog(idUsuario, "Proceso", "ObtenerUsuariosXEmpresa", $"Se obtuvierón {usuarios.Count} registros de usuarios por empresa.");
             return usuarios;
         }
 
-        public async Task<RespuestaDTO> ActivarDesactivarEmpresaEnUsuario(RelacionEmpresaUsuarioDTO parametro)
+        public async Task<RespuestaDTO> ActivarDesactivarEmpresaEnUsuario(RelacionEmpresaUsuarioDTO parametro, List<Claim> claims)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
+            var IdUs = claims.Find(c => c.Type == "guid")?.Value;
+            if(IdUs == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "La información del usuario es inconsistente";
+                return respuesta;
+            }
             var relaciones= await _usuarioxEmpresaService.ObtenerXIdEmpresa(parametro.IdEmpresa);
             var relacionExistente = relaciones.First(r => r.UserId == parametro.IdUsuario);
             //Si ya hay una relación existente para el usuario y la empresa y se pretende desactivarla, la eliminará.
@@ -140,6 +154,14 @@ namespace API_SSO.Procesos
             var resultadoEdicion = await _usuarioxEmpresaService.Editar(relacionExistente);
             respuesta = resultadoEdicion;
             respuesta.Descripcion = respuesta.Estatus ? "Empresa asignada correctamente." : "Ocurrió un error al intentar asignar la empresa.";
+            if (respuesta.Estatus)
+            {
+                await _logProceso.CrearLog(IdUs, "Proceso", "ActivarDesactivarEmpresaEnUsuario", "Asignación realizada exitosamente.");
+            }
+            else
+            {
+                await _logProceso.CrearLog(IdUs, "Proceso", "ActivarDesactivarEmpresaEnUsuario", "Ocurrió un problema al intentar realizar la asignación.");
+            }
             return respuesta;
         }
     }
