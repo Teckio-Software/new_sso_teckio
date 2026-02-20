@@ -27,7 +27,7 @@ namespace API_SSO.Controllers
 
         [HttpPut("EditarRol")]
         [Authorize]
-        public async Task<ActionResult<RespuestaDTO>> EditarRol(RolEdicionDTO rol)
+        public async Task<ActionResult<RespuestaDTO>> EditarRol(RolCreacionDTO rol)
         {
             var authen = HttpContext.User;
             var resultado = await _proceso.EditarRol(rol, authen.Claims.ToList());

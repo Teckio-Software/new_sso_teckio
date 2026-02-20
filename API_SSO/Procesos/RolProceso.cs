@@ -88,7 +88,7 @@ namespace API_SSO.Procesos
             return rolCreado;
         }
 
-        public async Task<RespuestaDTO> EditarRol(RolEdicionDTO objeto, List<Claim> claimsParam)
+        public async Task<RespuestaDTO> EditarRol(RolCreacionDTO objeto, List<Claim> claimsParam)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             var IdUs = claimsParam.Find(c => c.Type == "guid")?.Value;
@@ -100,12 +100,13 @@ namespace API_SSO.Procesos
             }
             RolDTO modelo = new RolDTO
             {
-                Descripcion = objeto.rol.Descripcion,
-                Color = objeto.rol.Color,
-                IdEmpresa = objeto.rol.IdEmpresa,
-                IdAspNetRole = objeto.rol.IdAspNetRole,
-                General = objeto.rol.General,
-                Activo = objeto.rol.Activo,
+                Id = objeto.Id,
+                Descripcion = objeto.Descripcion,
+                Color = objeto.Color,
+                IdEmpresa = objeto.IdEmpresa,
+                IdAspNetRole = objeto.IdAspNetRole,
+                General = objeto.General,
+                Activo = objeto.Activo,
             };
             respuesta = await _service.Editar(modelo);
             if (!respuesta.Estatus)
@@ -113,7 +114,7 @@ namespace API_SSO.Procesos
                 await _logProceso.CrearLog(IdUs, "Proceso", "EditarRol", $"Ocurrió un error al intentar editar el rol con Id: {modelo.Id}");
                 return respuesta;
             }
-            if (objeto.rol.IdAspNetRole == null)
+            if (objeto.IdAspNetRole == null)
             {
 
                 await _logProceso.CrearLog(IdUs, "Proceso", "EditarRol", $"Ocurrió un error al intentar editar el rol con Id: {modelo.Id}, No tiene Id del rol de AspNet.");

@@ -47,16 +47,18 @@
         public string? Descripcion { get; set; }
         public string? Color { get; set; }
         public int IdEmpresa { get; set; }
-
+        public bool General { get; set; }
+        public string? IdAspNetRole { get; set; }
+        public bool Activo { get; set; }
         public List<RoleClaimViewModel> Claims { get; set; } = new List<RoleClaimViewModel>();
     }
 
-    public class RolEdicionDTO
-    {
-        public RolDTO rol { get; set; } = new RolDTO();
-        public List<RoleClaimViewModel> Claims { get; set; } = new List<RoleClaimViewModel>();
+    //public class RolEdicionDTO
+    //{
+    //    public RolDTO rol { get; set; } = new RolDTO();
+    //    public List<RoleClaimViewModel> Claims { get; set; } = new List<RoleClaimViewModel>();
 
-    }
+    //}
 
     public class RoleClaimViewModel
     {
