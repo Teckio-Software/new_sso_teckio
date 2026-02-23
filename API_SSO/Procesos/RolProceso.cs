@@ -30,11 +30,11 @@ namespace API_SSO.Procesos
 
         public async Task<RolDTO> CrearRol(RolCreacionDTO rol, List<Claim> claims)
         {
-            var IdUs = claims.Find(c => c.Type == "guid")?.Value;
-            if(IdUs == null)
-            {
-                return new RolDTO();
-            }
+            //var IdUs = claims.Find(c => c.Type == "guid")?.Value;
+            //if(IdUs == null)
+            //{
+            //    return new RolDTO();
+            //}
             var nombreRol = rol.Nombre + "-" + rol.IdEmpresa;
             var nuevoRolIdentity = new IdentityRole
             {
@@ -77,14 +77,14 @@ namespace API_SSO.Procesos
             {
                 await _RolManager.AddClaimAsync(identityRol, new Claim(claim.Type, claim.Value));
             }
-            if (rolCreado.Id <= 0)
-            {
-                await _logProceso.CrearLog(IdUs, "Proceso", "CrearRol", $"Ocurrió un error al intentar crear el rol para la empresa con Id: {rol.IdEmpresa}");
-            }
-            else
-            {
-                await _logProceso.CrearLog(IdUs, "Proceso", "CrearRol", $"Se creó el rol con Id: {rolCreado.Id} exitosamente.");
-            }
+            //if (rolCreado.Id <= 0)
+            //{
+            //    await _logProceso.CrearLog(IdUs, "Proceso", "CrearRol", $"Ocurrió un error al intentar crear el rol para la empresa con Id: {rol.IdEmpresa}");
+            //}
+            //else
+            //{
+            //    await _logProceso.CrearLog(IdUs, "Proceso", "CrearRol", $"Se creó el rol con Id: {rolCreado.Id} exitosamente.");
+            //}
             return rolCreado;
         }
 
@@ -157,7 +157,12 @@ namespace API_SSO.Procesos
                 return new List<RolDTO>();
             }
             var lista = await _service.ObtenerTodos();
+            var RolAdministrador = await _RolManager.FindByNameAsync("Administrador");
             lista = lista.Where(r => r.IdEmpresa == IdEmpresa).ToList();
+            if (RolAdministrador != null)
+            {
+                lista = lista.Where(r => r.IdAspNetRole != RolAdministrador.Id).ToList();
+            }
             await _logProceso.CrearLog(idUs, "Proceso", "ObtenerXEmpresa", $"Se obtuvieron {lista.Count} registros de roles para la empresa con el Id: {IdEmpresa}");
             return lista;
         }

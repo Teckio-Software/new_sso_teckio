@@ -26,6 +26,7 @@ namespace API_SSO.Procesos
         private readonly IInvitacionService _invitacionService;
         private readonly IProyectoActualServce<SSOContext> _proyectoActualServce;
         private readonly LogProceso _logProceso;
+        private readonly IClienteService<SSOContext> _clienteService;
         public UsuarioProceso(UserManager<IdentityUser> userManager, 
             SignInManager<IdentityUser> signInManager, 
             IConfiguration configuracion, 
@@ -35,7 +36,8 @@ namespace API_SSO.Procesos
             SSOContext db, 
             IInvitacionService invitacionService,
             IProyectoActualServce<SSOContext> proyectoActualServce,
-            LogProceso logProceso
+            LogProceso logProceso,
+            IClienteService<SSOContext> clienteService
             )
         {
             _UserManager = userManager;
@@ -48,6 +50,7 @@ namespace API_SSO.Procesos
             _invitacionService = invitacionService;
             _proyectoActualServce = proyectoActualServce;
             _logProceso = logProceso;
+            _clienteService = clienteService;
         }
 
         public async Task<IdentityUser> ObtenerUsuario(string parametro)
@@ -116,33 +119,48 @@ namespace API_SSO.Procesos
             //var claims = _UserManager.GetClaimsAsync(user).Result;
             List<Claim> claims = new List<Claim>();
             var usuarioUltimaSeccion = await _proyectoActualServce.ObtenerXIdUsuario(user.Id);
-            if (usuarioUltimaSeccion.Id > 0)
+            var clienteEncontrado = await _clienteService.ObtenerXCorreo(user.Email);
+            if (clienteEncontrado.Id > 0)
             {
-                //foreach (var item in roles)
-                //{
-                //    var rol = await _RoleManager.FindByNameAsync(item);
-                //    var registroRol = await _rolService.ObtenerXIdAsp(rol.Id);
-                //    if (registroRol.IdEmpresa != usuarioUltimaSeccion.IdEmpresa)
-                //    {
-                //        continue;
-                //    }
-                //    zvClaims.Add(new Claim("role", rol.Name));
-                //    if (rol == null)
-                //    {
-                //        continue;
-                //    }
-                //    var RolClaims = await _RoleManager.GetClaimsAsync(rol);
-                //    zvClaims.AddRange(RolClaims);
-                //}
-                var rolAsignado = await _rolProceso.ObtenerRolXUsuarioXEmpresa(user, usuarioUltimaSeccion.IdEmpresa);
-                if (rolAsignado.Id > 0)
+                zvClaims.Add(new Claim("role", "Cliente"));
+            }
+            else
+            {
+                if (usuarioUltimaSeccion.Id > 0)
                 {
-                    var rol = await _RoleManager.FindByIdAsync(rolAsignado.IdAspNetRole);
-                    zvClaims.Add(new Claim("role", rol.Name));
-                    var RolClaims = await _RoleManager.GetClaimsAsync(rol);
-                    zvClaims.AddRange(RolClaims);
+                    //foreach (var item in roles)
+                    //{
+                    //    var rol = await _RoleManager.FindByNameAsync(item);
+                    //    var registroRol = await _rolService.ObtenerXIdAsp(rol.Id);
+                    //    if (registroRol.IdEmpresa != usuarioUltimaSeccion.IdEmpresa)
+                    //    {
+                    //        continue;
+                    //    }
+                    //    zvClaims.Add(new Claim("role", rol.Name));
+                    //    if (rol == null)
+                    //    {
+                    //        continue;
+                    //    }
+                    //    var RolClaims = await _RoleManager.GetClaimsAsync(rol);
+                    //    zvClaims.AddRange(RolClaims);
+                    //}
+                    var rolAsignado = await _rolProceso.ObtenerRolXUsuarioXEmpresa(user, usuarioUltimaSeccion.IdEmpresa);
+                    if (rolAsignado.Id > 0)
+                    {
+                        var rol = await _RoleManager.FindByIdAsync(rolAsignado.IdAspNetRole);
+                        zvClaims.Add(new Claim("role", rol.Name));
+                        var RolClaims = await _RoleManager.GetClaimsAsync(rol);
+                        zvClaims.AddRange(RolClaims);
+                    }
                 }
-
+                else
+                {
+                    var rolesEncontrados = await _UserManager.GetRolesAsync(user);
+                    if (rolesEncontrados.Count > 0)
+                    {
+                        zvClaims.Add(new Claim("role", rolesEncontrados[0]));
+                    }
+                }
             }
             //Si tiene privilegios de Super usuario o de Panel administrador los agrega como Claim
             var claimAdministrador = claims.FirstOrDefault(z => z.Value == "Super usuario");

@@ -65,7 +65,7 @@ namespace API_SSO.Procesos
         public async Task<RespuestaDTO> CrearUsuario(ClienteCreacionDTO clienteCreacion, List<Claim> claims, CancellationToken ct)
         {
             RespuestaDTO respuesta = new RespuestaDTO();
-            var idEjecutor = claims.First(c => c.Type == "guid")?.Value;
+            //var idEjecutor = claims.First(c => c.Type == "guid")?.Value;
             //Primero verifica que el correo, nombre y contraseña no estén vacíos
             if (
                 string.IsNullOrEmpty(clienteCreacion.CorreoElectronico)
@@ -169,6 +169,14 @@ namespace API_SSO.Procesos
                 {
                     throw new Exception("Ocurrió un error al intentar dar de alta la empresa.");
                 }
+                //Relaciona al cliente con la empresa
+                UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
+                {
+                    IdEmpresa = empresaCreada.Id,
+                    UserId = usuarioCreado.Id,
+                    Eliminado = false,
+                };
+                await _usuarioxEmpresaService.CrearYObtener(relacion);
                 //Crea el proyecto dentro de la nueva base de datos
                 var IdProyecto = await _baseDeDatosProceso.CrearProyecto(clienteCreacion, nombreBD);
                 if (IdProyecto <= 0)
@@ -216,16 +224,16 @@ namespace API_SSO.Procesos
                     //var hash = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
                     //await InvitarOperativo(invitado, hash, ct);
                     await InvitarOperativo(invitado, ct);
-                    UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
+                    UsuarioXempresaDTO relacionCliente = new UsuarioXempresaDTO
                     {
                         IdEmpresa = empresaCreada.Id,
                         UserId = invitado.Id,
                         Eliminado = false,
                     };
-                    await _usuarioxEmpresaService.CrearYObtener(relacion);
+                    await _usuarioxEmpresaService.CrearYObtener(relacionCliente);
                 }
                 await transaction.CommitAsync(ct);
-                await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuario", $"Se creó el usuario {usuarioCreado.UserName} con el rol de cliente y la empresa {empresaCreada.NombreComercial}.");
+                //await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuario", $"Se creó el usuario {usuarioCreado.UserName} con el rol de cliente y la empresa {empresaCreada.NombreComercial}.");
                 respuesta.Estatus = true;
                 respuesta.Descripcion = "Tour completo exitosamente.";
             }
@@ -233,7 +241,7 @@ namespace API_SSO.Procesos
     {
                 // Si algo falla, se deshacen los cambios en la BD principal (SSO/Identity)
                 await transaction.RollbackAsync(ct);
-                await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuario", $"Ocurrió un error al intentar crear el usuario {ex.Message}.");
+                //await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuario", $"Ocurrió un error al intentar crear el usuario {ex.Message}.");
                 respuesta.Estatus = false;
                 respuesta.Descripcion = $"Error en el proceso: {ex.Message}";
             }
