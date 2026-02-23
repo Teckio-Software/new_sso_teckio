@@ -49,7 +49,7 @@ namespace API_SSO.Procesos
             }
             var rolCreado = await _service.CrearYObtener(new RolDTO
             {
-                Descripcion = rol.Descripcion,
+                Descripcion = rol.Nombre,
                 Color = rol.Color,
                 DeSistema = false,
                 Activo = true,

@@ -129,6 +129,7 @@ namespace API_SSO.Procesos
                     FechaRegistro = DateTime.Now,
                     CodigoPostal = clienteCreacion.CpEmpresa,
                     Eliminado = false,
+                    Sociedad = clienteCreacion.Sociedad,
                     //DiaPago = clienteCreacion.DiaPago
                     //De momento esta programado para que el día de pago de la empresa sea el día en el que se registró el usuario
                     DiaPago = DateTime.Now.Day,

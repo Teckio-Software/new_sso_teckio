@@ -4,6 +4,7 @@ using API_SSO.Servicios;
 using API_SSO.Servicios.Contratos;
 using API_SSO.Utilidades;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
