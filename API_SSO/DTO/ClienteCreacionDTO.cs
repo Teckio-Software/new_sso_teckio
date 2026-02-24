@@ -31,6 +31,8 @@
         public List<RolCreacionDTO> roles { get; set; }
         //Datos invitaciones
         public List<UsuarioInvitaciones> invitaciones { get; set; }
+        public string CiudadEmpresa { get; set; }
+        public string DomicilioEmpresa { get; set; }
     }
 
     public class UsuarioInvitaciones

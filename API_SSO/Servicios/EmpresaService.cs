@@ -43,6 +43,8 @@ namespace API_SSO.Servicios
                 objetoEncontrado.CodigoPostal = empresa.CodigoPostal;
                 objetoEncontrado.DiaPago = empresa.DiaPago;
                 objetoEncontrado.Sociedad = empresa.Sociedad;
+                objetoEncontrado.Ciudad = empresa.Ciudad;
+                objetoEncontrado.Domicilio = empresa.Domicilio;
                 respuesta.Estatus = await _repository.Editar(objetoEncontrado);
                 respuesta.Descripcion = respuesta.Estatus ? "Empresa editada exitosamente." : "Ocurrió un error al intentar editar la empresa.";
                 return respuesta;
