@@ -1,0 +1,66 @@
+name: Development Frontend
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        run: |
+          git clone --depth=1 --branch "${{ github.ref_name }}" \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" repo
+
+      - name: Definir IMAGE
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE=ghcr.io/${OWNER_LC}/teckio_frontend" >> $GITHUB_ENV
+
+      - name: Detectar Dockerfile
+        working-directory: repo
+        run: |
+          DF=$(find . -maxdepth 4 -type f -name 'Dockerfile' | head -n1)
+          DIR=$(dirname "$DF")
+          echo "DOCKERFILE_PATH=$DF" >> $GITHUB_ENV
+          echo "BUILD_CONTEXT=$DIR" >> $GITHUB_ENV
+
+      - name: Login a GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build & Push
+        working-directory: repo
+        run: |
+          docker build -f "$DOCKERFILE_PATH" -t "$IMAGE:dev" "$BUILD_CONTEXT"
+          docker push "$IMAGE:dev"
+
+      - name: Preparar Key SSH
+        run: |
+          cat > key.pem <<'EOF'
+          ${{ secrets.DO_SSH_KEY }}
+          EOF
+          chmod 600 key.pem
+
+      - name: Sincronizar Config y Deploy (Ruta Correcta)
+        run: |
+          # 1. Asegurar que TU carpeta existe
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} "mkdir -p ~/app/compose"
+
+          # 2. Mandar el compose y el nginx a TU carpeta ~/app/compose
+          scp -o StrictHostKeyChecking=no -i key.pem repo/docker-compose.yml repo/nginx.dev.conf ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:~/app/compose/
+
+          # 3. Levantar todo usando tu .env.dev
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
+            cd ~/app/compose
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # Forzamos el uso de tu archivo de variables
+            docker compose --env-file .env.dev pull
+            docker compose --env-file .env.dev up -d --remove-orphans
+            
+            docker image prune -f
+          EOF
