@@ -46,6 +46,9 @@ jobs:
           chmod 600 key.pem
 
       - name: Sincronizar Config y Deploy (Ruta Correcta)
+        env:
+          USER: ${{ secrets.DROPLET_USER }}
+          HOST: ${{ secrets.DROPLET_HOST }}
         run: |
           # 1. Asegurar que TU carpeta existe
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} "mkdir -p ~/app/compose"
