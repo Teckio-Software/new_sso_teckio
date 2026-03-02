@@ -199,8 +199,8 @@ namespace API_SSO.Procesos
             {
                 return new RolDTO(); 
             }
-            var rolAsignado = datos.First(r => r.IdEmpresa == IdEmpresa);
-            return rolAsignado;
+            var rolAsignado = datos.Find(r => r.IdEmpresa == IdEmpresa);
+            return rolAsignado!=null?rolAsignado:new RolDTO();
         }
 
         public async Task<List<RoleClaimViewModel>> ObtenerClaimsXRol(int idRol, List<Claim> claims)
