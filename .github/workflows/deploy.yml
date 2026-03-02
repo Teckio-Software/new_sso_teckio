@@ -1,4 +1,4 @@
-name: Development Frontend
+name: Development SSO
 on:
   push:
     branches: [develop]
@@ -19,7 +19,7 @@ jobs:
       - name: Definir IMAGE
         run: |
           OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE=ghcr.io/${OWNER_LC}/teckio_frontend" >> $GITHUB_ENV
+          echo "IMAGE=ghcr.io/${OWNER_LC}/new_sso_teckio" >> $GITHUB_ENV
 
       - name: Detectar Dockerfile
         working-directory: repo
