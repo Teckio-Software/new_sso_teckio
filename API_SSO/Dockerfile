@@ -26,6 +26,6 @@ RUN if [ ! -f appsettings.Development.json ]; then \
         fi \
     fi
 
-ENTRYPOINT ["dotnet", "SSO.dll"]
+ENTRYPOINT ["dotnet", "API_SSO.dll"]
 
 EXPOSE 8081
