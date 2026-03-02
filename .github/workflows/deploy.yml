@@ -54,7 +54,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} "mkdir -p ~/app/compose"
 
           # 2. Mandar el compose y el nginx a TU carpeta ~/app/compose
-          scp -o StrictHostKeyChecking=no -i key.pem repo/docker-compose.yml repo/nginx.dev.conf ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }}:~/app/compose/
+          scp -o StrictHostKeyChecking=no -i key.pem docker-compose.yml nginx.dev.conf $SSH_USER@$SSH_HOST:~/app/compose/
 
           # 3. Levantar todo usando tu .env.dev
           ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
