@@ -45,25 +45,29 @@ jobs:
           EOF
           chmod 600 key.pem
 
-      - name: Sincronizar Config y Deploy (Ruta Correcta)
+      - name: Desplegar en Servidor
         env:
-          USER: ${{ secrets.DROPLET_USER }}
-          HOST: ${{ secrets.DROPLET_HOST }}
+          SSH_USER: ${{ secrets.DROPLET_USER }}
+          SSH_HOST: ${{ secrets.DROPLET_HOST }}
         run: |
-          # 1. Asegurar que TU carpeta existe
-          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} "mkdir -p ~/app/compose"
+          # 1. Configurar la llave para entrar
+          echo "${{ secrets.DO_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
 
-          # 2. Mandar el compose y el nginx a TU carpeta ~/app/compose
-          scp -o StrictHostKeyChecking=no -i key.pem docker-compose.yml nginx.dev.conf $SSH_USER@$SSH_HOST:~/app/compose/
-
-          # 3. Levantar todo usando tu .env.dev
-          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.DROPLET_USER }}@${{ secrets.DROPLET_HOST }} << 'EOF'
+          # 2. Entrar y ejecutar lo que YA ESTÁ en el servidor
+          ssh -o StrictHostKeyChecking=no -i key.pem $SSH_USER@$SSH_HOST << 'EOF'
+            set -e
             cd ~/app/compose
+            
+            echo ">> Login GHCR"
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Forzamos el uso de tu archivo de variables
+
+            echo ">> Actualizando imágenes"
             docker compose --env-file .env.dev pull
+
+            echo ">> Reiniciando contenedores"
             docker compose --env-file .env.dev up -d --remove-orphans
-            
+
+            echo ">> Limpieza"
             docker image prune -f
           EOF
