@@ -149,7 +149,7 @@ namespace API_SSO.Procesos
             List<UsuarioDTO> usuarios = new List<UsuarioDTO>();
             var idUsuario = claims.FirstOrDefault(c => c.Type == "guid")?.Value;
             var rol = claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-            var rolAdministrador = _roleManager.FindByNameAsync("Administrador");
+            var rolAdministrador = await _roleManager.FindByNameAsync("Administrador");
             //if(rol == "Administrador")
             //{
             //    var listaUsuarios = _UserManager.Users.ToList();
@@ -187,7 +187,7 @@ namespace API_SSO.Procesos
                 //var aspRoles = await _roleManager.FindByNameAsync(aspRolesStr);
                 //var rolAsignado = roles.Find(r => aspRoles.Contains(r.IdAspNetRole));
                 var rolAsignado = await _rolProceso.ObtenerRolXUsuarioXEmpresa(user, idEmpresa);
-                if(rolAsignado.Id == rolAdministrador.Id)
+                if(rolAsignado.IdAspNetRole == rolAdministrador.Id)
                 {
                     continue;
                 }
