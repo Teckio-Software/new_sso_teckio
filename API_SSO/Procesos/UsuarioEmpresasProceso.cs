@@ -149,21 +149,21 @@ namespace API_SSO.Procesos
             List<UsuarioDTO> usuarios = new List<UsuarioDTO>();
             var idUsuario = claims.FirstOrDefault(c => c.Type == "guid")?.Value;
             var rol = claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-            if(rol == "Administrador")
-            {
-                var listaUsuarios = _UserManager.Users.ToList();
-                foreach(var user in listaUsuarios)
-                {
-                    UsuarioDTO usuario = new UsuarioDTO
-                    {
-                        Id = user.Id,
-                        Correo = user.Email,
-                        Nombre = user.UserName,
-                    };
-                    usuarios.Add(usuario);
-                }
-                return usuarios;
-            }
+            //if(rol == "Administrador")
+            //{
+            //    var listaUsuarios = _UserManager.Users.ToList();
+            //    foreach(var user in listaUsuarios)
+            //    {
+            //        UsuarioDTO usuario = new UsuarioDTO
+            //        {
+            //            Id = user.Id,
+            //            Correo = user.Email,
+            //            Nombre = user.UserName,
+            //        };
+            //        usuarios.Add(usuario);
+            //    }
+            //    return usuarios;
+            //}
 
             //var roles = await _rolProceso.ObtenerXEmpresa(idEmpresa);
             if (idUsuario == null)

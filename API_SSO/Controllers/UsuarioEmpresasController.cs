@@ -46,6 +46,7 @@ namespace API_SSO.Controllers
         [Authorize]
         public async Task<ActionResult<List<UsuarioDTO>>> ObtenerUsuariosXEmpresa(int idEmpresa)
         {
+            
             var resultado = await _proceso.ObtenerUsuariosXEmpresa(idEmpresa, HttpContext.User.Claims.ToList());
             return resultado;
         }
