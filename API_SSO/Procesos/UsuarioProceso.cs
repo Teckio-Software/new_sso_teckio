@@ -116,63 +116,68 @@ namespace API_SSO.Procesos
                 new Claim("activo","1")
             };
             //var roles = await _UserManager.GetRolesAsync(user);
-            //var claims = _UserManager.GetClaimsAsync(user).Result;
-            List<Claim> claims = new List<Claim>();
-            var usuarioUltimaSeccion = await _proyectoActualServce.ObtenerXIdUsuario(user.Id);
-            var clienteEncontrado = await _clienteService.ObtenerXCorreo(user.Email);
-            if (clienteEncontrado.Id > 0)
+            var rolesUsuario = await _UserManager.GetRolesAsync(user);
+            //List<Claim> claims = await _UserManager.GetClaimsAsync(user);
+            var claimAdministrador = rolesUsuario.FirstOrDefault(z => z == "Administrador");
+            if (claimAdministrador != null)
             {
-                zvClaims.Add(new Claim("role", "Cliente"));
+                zvClaims.Add(new Claim("role", claimAdministrador));
             }
             else
             {
-                if (usuarioUltimaSeccion.Id > 0)
+                var usuarioUltimaSeccion = await _proyectoActualServce.ObtenerXIdUsuario(user.Id);
+                var clienteEncontrado = await _clienteService.ObtenerXCorreo(user.Email);
+                if (clienteEncontrado.Id > 0)
                 {
-                    //foreach (var item in roles)
-                    //{
-                    //    var rol = await _RoleManager.FindByNameAsync(item);
-                    //    var registroRol = await _rolService.ObtenerXIdAsp(rol.Id);
-                    //    if (registroRol.IdEmpresa != usuarioUltimaSeccion.IdEmpresa)
-                    //    {
-                    //        continue;
-                    //    }
-                    //    zvClaims.Add(new Claim("role", rol.Name));
-                    //    if (rol == null)
-                    //    {
-                    //        continue;
-                    //    }
-                    //    var RolClaims = await _RoleManager.GetClaimsAsync(rol);
-                    //    zvClaims.AddRange(RolClaims);
-                    //}
-                    var rolAsignado = await _rolProceso.ObtenerRolXUsuarioXEmpresa(user, usuarioUltimaSeccion.IdEmpresa);
-                    if (rolAsignado.Id > 0)
-                    {
-                        var rol = await _RoleManager.FindByIdAsync(rolAsignado.IdAspNetRole);
-                        zvClaims.Add(new Claim("role", rol.Name));
-                        var RolClaims = await _RoleManager.GetClaimsAsync(rol);
-                        zvClaims.AddRange(RolClaims);
-                    }
+                    zvClaims.Add(new Claim("role", "Cliente"));
                 }
                 else
                 {
-                    var rolesEncontrados = await _UserManager.GetRolesAsync(user);
-                    if (rolesEncontrados.Count > 0)
+                    if (usuarioUltimaSeccion.Id > 0)
                     {
-                        zvClaims.Add(new Claim("role", rolesEncontrados[0]));
+                        //foreach (var item in roles)
+                        //{
+                        //    var rol = await _RoleManager.FindByNameAsync(item);
+                        //    var registroRol = await _rolService.ObtenerXIdAsp(rol.Id);
+                        //    if (registroRol.IdEmpresa != usuarioUltimaSeccion.IdEmpresa)
+                        //    {
+                        //        continue;
+                        //    }
+                        //    zvClaims.Add(new Claim("role", rol.Name));
+                        //    if (rol == null)
+                        //    {
+                        //        continue;
+                        //    }
+                        //    var RolClaims = await _RoleManager.GetClaimsAsync(rol);
+                        //    zvClaims.AddRange(RolClaims);
+                        //}
+                        var rolAsignado = await _rolProceso.ObtenerRolXUsuarioXEmpresa(user, usuarioUltimaSeccion.IdEmpresa);
+                        if (rolAsignado.Id > 0)
+                        {
+                            var rol = await _RoleManager.FindByIdAsync(rolAsignado.IdAspNetRole);
+                            zvClaims.Add(new Claim("role", rol.Name));
+                            var RolClaims = await _RoleManager.GetClaimsAsync(rol);
+                            zvClaims.AddRange(RolClaims);
+                        }
+                    }
+                    else
+                    {
+                        var rolesEncontrados = await _UserManager.GetRolesAsync(user);
+                        if (rolesEncontrados.Count > 0)
+                        {
+                            zvClaims.Add(new Claim("role", rolesEncontrados[0]));
+                        }
                     }
                 }
             }
+            
             //Si tiene privilegios de Super usuario o de Panel administrador los agrega como Claim
-            var claimAdministrador = claims.FirstOrDefault(z => z.Value == "Super usuario");
-            if (claimAdministrador != null)
-            {
-                zvClaims.Add(claimAdministrador);
-            }
-            var claimAdministradorRoles = claims.FirstOrDefault(z => z.Value == "Panel administrador");
-            if (claimAdministradorRoles != null)
-            {
-                zvClaims.Add(claimAdministradorRoles);
-            }
+            
+            //var claimAdministradorRoles = claims.FirstOrDefault(z => z.Value == "Panel administrador");
+            //if (claimAdministradorRoles != null)
+            //{
+            //    zvClaims.Add(claimAdministradorRoles);
+            //}
             
             zvClaims.Add(new Claim("idUsuario", user.Id));
             var zvLlave = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_Configuracion["llavejwt"]!));
