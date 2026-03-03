@@ -1,0 +1,73 @@
+name: Development SSO
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        run: |
+          git clone --depth=1 --branch "${{ github.ref_name }}" \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" repo
+
+      - name: Definir IMAGE
+        run: |
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE=ghcr.io/${OWNER_LC}/new_sso_teckio" >> $GITHUB_ENV
+
+      - name: Detectar Dockerfile
+        working-directory: repo
+        run: |
+          DF=$(find . -maxdepth 4 -type f -name 'Dockerfile' | head -n1)
+          DIR=$(dirname "$DF")
+          echo "DOCKERFILE_PATH=$DF" >> $GITHUB_ENV
+          echo "BUILD_CONTEXT=$DIR" >> $GITHUB_ENV
+
+      - name: Login a GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build & Push
+        working-directory: repo
+        run: |
+          docker build -f "$DOCKERFILE_PATH" -t "$IMAGE:dev" "$BUILD_CONTEXT"
+          docker push "$IMAGE:dev"
+
+      - name: Preparar Key SSH
+        run: |
+          cat > key.pem <<'EOF'
+          ${{ secrets.DO_SSH_KEY }}
+          EOF
+          chmod 600 key.pem
+
+      - name: Desplegar en Servidor
+        env:
+          SSH_USER: ${{ secrets.DROPLET_USER }}
+          SSH_HOST: ${{ secrets.DROPLET_HOST }}
+        run: |
+          # 1. Configurar la llave para entrar
+          echo "${{ secrets.DO_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+          # 2. Entrar y ejecutar lo que YA ESTÁ en el servidor
+          ssh -o StrictHostKeyChecking=no -i key.pem $SSH_USER@$SSH_HOST << 'EOF'
+            set -e
+            cd ~/app/compose
+            
+            echo ">> Login GHCR"
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo ">> Actualizando imágenes"
+            docker compose --env-file .env.dev pull
+
+            echo ">> Reiniciando contenedores"
+            docker compose --env-file .env.dev up -d --remove-orphans
+
+            echo ">> Limpieza"
+            docker image prune -f
+          EOF
