@@ -149,6 +149,7 @@ namespace API_SSO.Procesos
             List<UsuarioDTO> usuarios = new List<UsuarioDTO>();
             var idUsuario = claims.FirstOrDefault(c => c.Type == "guid")?.Value;
             var rol = claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            var rolAdministrador = _roleManager.FindByNameAsync("Administrador");
             //if(rol == "Administrador")
             //{
             //    var listaUsuarios = _UserManager.Users.ToList();
@@ -186,6 +187,10 @@ namespace API_SSO.Procesos
                 //var aspRoles = await _roleManager.FindByNameAsync(aspRolesStr);
                 //var rolAsignado = roles.Find(r => aspRoles.Contains(r.IdAspNetRole));
                 var rolAsignado = await _rolProceso.ObtenerRolXUsuarioXEmpresa(user, idEmpresa);
+                if(rolAsignado.Id == rolAdministrador.Id)
+                {
+                    continue;
+                }
                 UsuarioDTO usuario = new UsuarioDTO
                 {
                     Id = user.Id,
@@ -196,6 +201,7 @@ namespace API_SSO.Procesos
                 };
                 usuarios.Add(usuario);
             }
+            usuarios = usuarios.Where(u => u.Id != idUsuario).ToList();
             await _logProceso.CrearLog(idUsuario, "Proceso", "ObtenerUsuariosXEmpresa", $"Se obtuvierón {usuarios.Count} registros de usuarios por empresa.");
             return usuarios;
         }
