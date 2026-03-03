@@ -136,5 +136,12 @@ namespace API_SSO.Controllers
             //var authen = HttpContext.User;
             return NoContent();
         }
+
+        [HttpPost("CrearUsuarioBase")]
+        public async Task<ActionResult<RespuestaDTO>> CrearUsuarioBase(UsuarioBaseDTO usuario, CancellationToken ct)
+        {
+            var resultado = await _usuarioProceso.CrearUsuarioBase(usuario, HttpContext.User.Claims.ToList(), ct);
+            return resultado;
+        }
     }
 }

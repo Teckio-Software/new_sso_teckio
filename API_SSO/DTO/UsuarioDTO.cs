@@ -9,4 +9,12 @@
         public string Rol { get; set; }
 
     }
+
+    public class UsuarioBaseDTO
+    {
+        public string NombreUsuario { get; set; }
+        public string Correo { get; set; }
+        public string Password { get; set; }
+        public int IdEmpresa { get; set; }
+    }
 }

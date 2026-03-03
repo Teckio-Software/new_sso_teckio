@@ -1,10 +1,12 @@
 ﻿using API_SSO.Context;
 using API_SSO.DTO;
 using API_SSO.Modelos;
+using API_SSO.Servicios;
 using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Graph.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -27,6 +29,7 @@ namespace API_SSO.Procesos
         private readonly IProyectoActualServce<SSOContext> _proyectoActualServce;
         private readonly LogProceso _logProceso;
         private readonly IClienteService<SSOContext> _clienteService;
+        private readonly IUsuarioxEmpresaService<SSOContext> _usuarioxEmpresaService;
         public UsuarioProceso(UserManager<IdentityUser> userManager, 
             SignInManager<IdentityUser> signInManager, 
             IConfiguration configuracion, 
@@ -37,7 +40,8 @@ namespace API_SSO.Procesos
             IInvitacionService invitacionService,
             IProyectoActualServce<SSOContext> proyectoActualServce,
             LogProceso logProceso,
-            IClienteService<SSOContext> clienteService
+            IClienteService<SSOContext> clienteService,
+           IUsuarioxEmpresaService<SSOContext> usuarioxEmpresaService
             )
         {
             _UserManager = userManager;
@@ -51,6 +55,7 @@ namespace API_SSO.Procesos
             _proyectoActualServce = proyectoActualServce;
             _logProceso = logProceso;
             _clienteService = clienteService;
+            _usuarioxEmpresaService = usuarioxEmpresaService;
         }
 
         public async Task<IdentityUser> ObtenerUsuario(string parametro)
@@ -508,6 +513,69 @@ namespace API_SSO.Procesos
             respuesta.Estatus = false;
             respuesta.Descripcion = "El usuairo no cuenta con permisos para realizar esta acción.";
             return respuesta;
+        }
+
+        public async Task<RespuestaDTO> CrearUsuarioBase(UsuarioBaseDTO usuario, List<Claim> claims, CancellationToken ct)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var idEjecutor = claims.First(c => c.Type == "guid")?.Value;
+            if (idEjecutor == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "No se pudo identificar al usuario que ejecuta la acción.";
+                return respuesta;
+            }
+            var existe = await ObtenerUsuario(usuario.Correo);
+            if(existe!= null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ya existe un usuario con ese correo.";
+                return respuesta;
+            }
+            existe = await ObtenerUsuario(usuario.NombreUsuario);
+            if (existe != null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Ya existe un usuario con ese nombre de usuario.";
+                return respuesta;
+            }
+            var usuarioIdentity = new IdentityUser
+            {
+                UserName = usuario.NombreUsuario,
+                Email = usuario.Correo,
+            };
+            using var transaction = await _db.Database.BeginTransactionAsync(ct);
+            try
+            {
+                var creacionUsuario = await _UserManager.CreateAsync(usuarioIdentity, usuario.Password);
+                if (!creacionUsuario.Succeeded)
+                {
+                    throw new Exception("Ocurrió un error al intentar crear el usuario.");
+                }
+                var usuarioCreado = await _UserManager.FindByEmailAsync(usuario.Correo);
+                //Relaciona al cliente con la empresa
+                UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
+                {
+                    IdEmpresa = usuario.IdEmpresa,
+                    UserId = usuarioCreado.Id,
+                    Eliminado = false,
+                };
+                var relacionCreada = await _usuarioxEmpresaService.CrearYObtener(relacion);
+                await transaction.CommitAsync(ct);
+                await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuarioBase", $"Se creo el usuario con el correo {usuario.Correo}.");
+                respuesta.Estatus = relacionCreada.Id > 0;
+                respuesta.Descripcion = respuesta.Estatus ? "Usuario creado exitosamente" : "Ocurrió un error al intentar crear el usuario.";
+                return respuesta;
+            }
+            catch(Exception ex)
+            {
+                await transaction.RollbackAsync(ct);
+                await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuarioBase", $"ocurrió un problema al crear el usuario con el correo {usuario.Correo}.");
+                respuesta.Estatus = false;
+                respuesta.Descripcion = ex.Message;
+                return respuesta;
+            }
+            
         }
     }
 }
