@@ -140,7 +140,7 @@ namespace API_SSO.Context
                 entity.Property(e => e.CodigoPostal).HasMaxLength(10);
                 entity.Property(e => e.FechaRegistro).HasColumnType("datetime");
                 entity.Property(e => e.NombreComercial).HasMaxLength(200);
-                entity.Property(e => e.Rfc).HasMaxLength(13);
+                entity.Property(e => e.Rfc).HasMaxLength(15);
                 entity.Property(e => e.Sociedad)
                     .HasMaxLength(250)
                     .HasDefaultValue("");

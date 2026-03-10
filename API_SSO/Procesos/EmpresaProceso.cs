@@ -29,6 +29,7 @@ namespace API_SSO.Procesos
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             var IdUs = claims.Find(c=>c.Type == "guid")?.Value;
+            var emailUs = claims.Find(c => c.Type == ClaimTypes.Email)?.Value;
             if (IdUs == null)
             {
                 respuesta.Estatus = false;
@@ -48,16 +49,26 @@ namespace API_SSO.Procesos
                 Eliminado = false
             };
             //Obtiene al cliente, sus relaciones y la última empresa registrada
-            var cliente = await _ClienteService.ObtenerXId(empresa.IdCliente);
-            var relaciones = await _empresaXClienteService.ObtenerPorIdCliente(empresa.IdCliente);
+            var clientes = await _ClienteService.ObtenerTodos();
+            var cliente = clientes.Where(c => c.Correo == emailUs).FirstOrDefault();
+            if (cliente == null)
+            {
+                cliente = new DTOs.ClienteDTO();
+            }
+            else
+            {
+                empresa.IdCliente = cliente.Id;
+            }
+            var relaciones = await _empresaXClienteService.ObtenerPorIdCliente(cliente.Id);
+            EmpresaDTO ultimaEmpresa = new EmpresaDTO();
             if (relaciones.Count <= 0)
             {
-                await _logProceso.CrearLog(IdUs, "Proceso", "CrearEmpresa", $"El cliente {empresa.IdCliente} no tiene empresas relacionadas, por lo que no se puede determinar el día de pago");
-                respuesta.Estatus = false;
-                respuesta.Descripcion = "Ocurrió un problema al obtener la información del cliente";
-                return respuesta;
+                ultimaEmpresa.DiaPago = DateTime.Now.Day;
             }
-            var ultimaEmpresa = await _EmpresaService.ObtenerXId(relaciones[relaciones.Count - 1].IdEmpresa);
+            else
+            {
+                ultimaEmpresa = await _EmpresaService.ObtenerXId(relaciones[relaciones.Count - 1].IdEmpresa);
+            }
             using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
             try
             {
@@ -83,17 +94,20 @@ namespace API_SSO.Procesos
                 var empresaCreada = await _EmpresaService.CrearYObtener(modelo);
                 if (empresaCreada != null)
                 {
-                    EmpresaXclienteDTO relacion = new EmpresaXclienteDTO
+                    if (empresa.IdCliente > 0)
                     {
-                        IdCliente = empresa.IdCliente,
-                        IdEmpresa = empresaCreada.Id
-                    };
-                    var resultRelacion = await _empresaXClienteService.CrearYObtener(relacion);
-                    if (resultRelacion.Id <= 0)
-                    {
-                        
-                        throw new Exception("Ocurrió un error al intentar crear la empresa");
-                        
+                        EmpresaXclienteDTO relacion = new EmpresaXclienteDTO
+                        {
+                            IdCliente = empresa.IdCliente,
+                            IdEmpresa = empresaCreada.Id
+                        };
+                        var resultRelacion = await _empresaXClienteService.CrearYObtener(relacion);
+                        if (resultRelacion.Id <= 0)
+                        {
+
+                            throw new Exception("Ocurrió un error al intentar crear la empresa");
+
+                        }
                     }
                 }
                 string nombreBD = empresaCreada.NombreComercial + string.Format("{0:D3}", empresaCreada.Id);
