@@ -94,17 +94,20 @@ namespace API_SSO.Procesos
                 var empresaCreada = await _EmpresaService.CrearYObtener(modelo);
                 if (empresaCreada != null)
                 {
-                    EmpresaXclienteDTO relacion = new EmpresaXclienteDTO
+                    if (empresa.IdCliente > 0)
                     {
-                        IdCliente = empresa.IdCliente,
-                        IdEmpresa = empresaCreada.Id
-                    };
-                    var resultRelacion = await _empresaXClienteService.CrearYObtener(relacion);
-                    if (resultRelacion.Id <= 0)
-                    {
-                        
-                        throw new Exception("Ocurrió un error al intentar crear la empresa");
-                        
+                        EmpresaXclienteDTO relacion = new EmpresaXclienteDTO
+                        {
+                            IdCliente = empresa.IdCliente,
+                            IdEmpresa = empresaCreada.Id
+                        };
+                        var resultRelacion = await _empresaXClienteService.CrearYObtener(relacion);
+                        if (resultRelacion.Id <= 0)
+                        {
+
+                            throw new Exception("Ocurrió un error al intentar crear la empresa");
+
+                        }
                     }
                 }
                 string nombreBD = empresaCreada.NombreComercial + string.Format("{0:D3}", empresaCreada.Id);
