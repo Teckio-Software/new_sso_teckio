@@ -1,4 +1,5 @@
-﻿using API_SSO.Servicios.Contratos;
+﻿using API_SSO.Context;
+using API_SSO.Servicios.Contratos;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +10,12 @@ namespace API_SSO.Controllers
     public class InvitacionController : ControllerBase
     {
         private readonly IInvitacionService _invitacionService;
-        public InvitacionController(IInvitacionService svc)
+        private readonly IClienteService<SSOContext> _clienteService;
+
+        public InvitacionController(IInvitacionService svc, IClienteService<SSOContext> clienteService)
         {
             _invitacionService = svc;
+            _clienteService = clienteService;
         }
 
         public record CrearInvitacionRequest(string Email);
@@ -52,13 +56,17 @@ namespace API_SSO.Controllers
             var (ok, inv, error) = await _invitacionService.RedeemAsync(req.Token, ct);
             if (!ok || inv is null) return BadRequest(new { ok = false, message = error });
 
+            var cliente = await _clienteService.ObtenerXCorreo(inv.Email ?? string.Empty);
+            var limiteUsuarios = cliente?.CantidadUsuariosXempresa ?? 0;
+
             return Ok(new
             {
                 ok = true,
                 invitationId = inv.Id,
                 email = inv.Email,
                 expiresAt = inv.ExpiresAt,
-                onboarding = true
+                onboarding = true,
+                limiteUsuariosInvitables = limiteUsuarios
             });
         }
 
