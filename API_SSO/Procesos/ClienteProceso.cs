@@ -484,6 +484,7 @@ namespace API_SSO.Procesos
         {
             RespuestaDTO respuesta = new RespuestaDTO();
             var idUsuario = claims.First(c => c.Type == "guid")?.Value;
+            var rolUsuario = claims.First(c => c.Type == ClaimTypes.Role)?.Value;
             if(idUsuario == null)
             {
                 respuesta.Estatus = false;
@@ -499,7 +500,8 @@ namespace API_SSO.Procesos
             }
             var cliente = await _clienteService.ObtenerXCorreo(usuarioEjecutor.Email);
             var disponibles = await ObtenerUsuariosRestantesXCliente(cliente.Id);
-            if (disponibles <= 0)
+            //Consulta la cantidad de usuarios que se pueden crear aunque si es administrador puede ignorar este límite
+            if (disponibles <= 0 && rolUsuario!="Administrador")
             {
                 await _logProceso.CrearLog(idUsuario, "Proceso", "InvitarUsuario", $"No se va a invitar al usuario debido a que el cliente ha alcanzado su máximo de usuarios");
                 respuesta.Estatus = false;
