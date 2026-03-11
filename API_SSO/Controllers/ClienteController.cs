@@ -60,5 +60,22 @@ namespace API_SSO.Controllers
             var resultado = await _proceso.EditarCliente(cliente, authen.Claims.ToList());
             return resultado;
         }
+
+        [HttpPost("invitarUsuario")]
+        [Authorize]
+        public async Task<ActionResult<RespuestaDTO>> InvitarUsuario(OperativoBaseDTO usuario, CancellationToken ct)
+        {
+            var authen = HttpContext.User;
+            var resultado = await _proceso.InvitarUsuario(usuario, authen.Claims.ToList(), ct);
+            return resultado;
+        }
+
+        [HttpGet("obtenerUsuariosRestantes")]
+        public async Task<ActionResult<int>> ObtenerRestantes()
+        {
+            var authen = HttpContext.User;
+            var restantes = await _proceso.ConsultarRestantes(authen.Claims.ToList());
+            return restantes;
+        }
     }
 }

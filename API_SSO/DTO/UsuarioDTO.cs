@@ -17,4 +17,12 @@
         public string Password { get; set; }
         public int IdEmpresa { get; set; }
     }
+
+    public class OperativoBaseDTO
+    {
+        public string NombreUsuario { get; set; }
+        public string Correo { get; set; }
+        public int IdRol { get; set; }
+        public int IdEmpresa { get; set; }
+    }
 }

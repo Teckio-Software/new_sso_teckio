@@ -14,6 +14,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using static API_SSO.Controllers.ProyectoActualController;
 
 namespace API_SSO.Procesos
 {
@@ -241,7 +242,7 @@ namespace API_SSO.Procesos
                 respuesta.Descripcion = "Tour completo exitosamente.";
             }
             catch (Exception ex)
-    {
+            {
                 // Si algo falla, se deshacen los cambios en la BD principal (SSO/Identity)
                 await transaction.RollbackAsync(ct);
                 //await _logProceso.CrearLog(idEjecutor, "Proceso", "CrearUsuario", $"Ocurrió un error al intentar crear el usuario {ex.Message}.");
@@ -442,6 +443,121 @@ namespace API_SSO.Procesos
             }
             await _logProceso.CrearLog(idUsuario, "Proceso", "ObtenerClienteXId", $"Se obtuvo el cliente con id {id}");
             return cliente;
+        }
+
+        public async Task<int> ObtenerUsuariosRestantesXCliente(int idCliente)
+        {
+            var cliente = await _clienteService.ObtenerXId(idCliente);
+            if (cliente.Id <= 0)
+            {
+                return 0;
+            }
+            var relaciones = await _empresaxClienteService.ObtenerPorIdCliente(cliente.Id);
+            int numeroUsuarios = 0;
+            foreach(var relacion in relaciones)
+            {
+                var usuarios = await _usuarioxEmpresaService.ObtenerXIdEmpresa(relacion.IdEmpresa);
+                numeroUsuarios += usuarios.Count;
+            }
+            numeroUsuarios = cliente.CantidadUsuariosXempresa!=null? (int)cliente.CantidadUsuariosXempresa : 0 - numeroUsuarios;
+            return numeroUsuarios;
+        }
+
+        public async Task<int> ConsultarRestantes(List<Claim> claims)
+        {
+            var idUsuario = claims.First(c => c.Type == "guid")?.Value;
+            if (idUsuario == null)
+            {
+                return 0;
+            }
+            var usuarioEjecutor = await _UsuarioManager.FindByIdAsync(idUsuario);
+            if (usuarioEjecutor == null || string.IsNullOrEmpty(usuarioEjecutor.Email))
+            {
+                return 0;
+            }
+            var cliente = await _clienteService.ObtenerXCorreo(usuarioEjecutor.Email);
+            var restantes = await ObtenerUsuariosRestantesXCliente(cliente.Id);
+            return restantes;
+        }
+
+        public async Task<RespuestaDTO> InvitarUsuario(OperativoBaseDTO usuario, List<Claim> claims, CancellationToken ct)
+        {
+            RespuestaDTO respuesta = new RespuestaDTO();
+            var idUsuario = claims.First(c => c.Type == "guid")?.Value;
+            if(idUsuario == null)
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Falta información del usuario.";
+                return respuesta;
+            }
+            var usuarioEjecutor = await _UsuarioManager.FindByIdAsync(idUsuario);
+            if (usuarioEjecutor == null || string.IsNullOrEmpty(usuarioEjecutor.Email))
+            {
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Falta información del usuario.";
+                return respuesta;
+            }
+            var cliente = await _clienteService.ObtenerXCorreo(usuarioEjecutor.Email);
+            var disponibles = await ObtenerUsuariosRestantesXCliente(cliente.Id);
+            if (disponibles <= 0)
+            {
+                await _logProceso.CrearLog(idUsuario, "Proceso", "InvitarUsuario", $"No se va a invitar al usuario debido a que el cliente ha alcanzado su máximo de usuarios");
+                respuesta.Estatus = false;
+                respuesta.Descripcion = "Se ha alcanzado el límite de usuarios.";
+                return respuesta;
+            }
+            var existeInvitado = await _UsuarioManager.FindByEmailAsync(usuario.Correo);
+            var invitado = new IdentityUser
+            {
+                Email = usuario.Correo,
+                UserName = usuario.NombreUsuario
+            };
+            using var transaction = await _dbContext.Database.BeginTransactionAsync(ct);
+            try
+            {
+                if (existeInvitado == null)
+                {
+                    var resultInvitado = await _UsuarioManager.CreateAsync(invitado);
+                }
+                else
+                {
+                    invitado = existeInvitado;
+                }
+                var roles = await _rolProceso.ObtenerXEmpresa(usuario.IdEmpresa, claims);
+                var rol = roles.FirstOrDefault(r => r.Id == usuario.IdRol);
+                if (rol != null && !string.IsNullOrEmpty(rol.IdAspNetRole))
+                {
+                    var rolASP = await _RolManager.FindByIdAsync(rol.IdAspNetRole);
+                    if (rolASP != null && !string.IsNullOrEmpty(rolASP.Name))
+                    {
+                        await _UsuarioManager.AddToRoleAsync(invitado, rolASP.Name);
+                    }
+                }
+                //var token = await _UsuarioManager.GeneratePasswordResetTokenAsync(invitado);
+                //var hash = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(token));
+                //await InvitarOperativo(invitado, hash, ct);
+                await InvitarOperativo(invitado, ct);
+                UsuarioXempresaDTO relacionCliente = new UsuarioXempresaDTO
+                {
+                    IdEmpresa = usuario.IdEmpresa,
+                    UserId = invitado.Id,
+                    Eliminado = false,
+                };
+                await _usuarioxEmpresaService.CrearYObtener(relacionCliente);
+            }
+            catch(Exception ex)
+            {
+                await transaction.RollbackAsync();
+                await _logProceso.CrearLog(idUsuario, "Proceso", "InvitarUsuario", $"Ocurrió un error al intentar crear al usuario: {ex.Message}.");
+                respuesta.Estatus = false;
+                respuesta.Descripcion = ex.Message;
+                return respuesta;
+            }
+            await transaction.CommitAsync();
+            await _logProceso.CrearLog(idUsuario, "Proceso", "InvitarUsuario", $"Se ha invitado al usuario.");
+            respuesta.Estatus = true;
+            respuesta.Descripcion = "Se ha invitado al usuario.";
+            return respuesta;
         }
     }
 }
