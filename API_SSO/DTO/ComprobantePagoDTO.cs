@@ -10,7 +10,7 @@
 
         public string? Ruta { get; set; }
 
-        public int? Estatus { get; set; }
+        public int? Estatus { get; set; } //0: Capturado , 1: Autorizado, 2: Cancelado
 
         public DateTime? FechaCarga { get; set; }
 
