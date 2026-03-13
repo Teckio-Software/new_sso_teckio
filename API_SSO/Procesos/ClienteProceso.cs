@@ -166,13 +166,13 @@ namespace API_SSO.Procesos
                 //Genera el nombre de la base de datos
                 string nombreBD = clienteCreacion.NombreEmpresa + string.Format("{0:D3}", empresaCreada.Id);
                 //Ejecuta el proceso para crear la base de datos
-                await _baseDeDatosProceso.CrearBaseDeDatos(nombreBD);
-                //Verifica si la base de datos se creó exitosamente
-                var bDCreada = await _baseDeDatosProceso.VerifyInstallation(nombreBD);
-                if (!bDCreada)
-                {
-                    throw new Exception("Ocurrió un error al intentar dar de alta la empresa.");
-                }
+                //await _baseDeDatosProceso.CrearBaseDeDatos(nombreBD);
+                ////Verifica si la base de datos se creó exitosamente
+                //var bDCreada = await _baseDeDatosProceso.VerifyInstallation(nombreBD);
+                //if (!bDCreada)
+                //{
+                //    throw new Exception("Ocurrió un error al intentar dar de alta la empresa.");
+                //}
                 //Relaciona al cliente con la empresa
                 UsuarioXempresaDTO relacion = new UsuarioXempresaDTO
                 {
