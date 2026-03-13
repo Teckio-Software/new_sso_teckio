@@ -182,14 +182,14 @@ namespace API_SSO.Procesos
                 };
                 await _usuarioxEmpresaService.CrearYObtener(relacion);
                 //Crea el proyecto dentro de la nueva base de datos
-                var IdProyecto = await _baseDeDatosProceso.CrearProyecto(clienteCreacion, nombreBD);
-                if (IdProyecto <= 0)
-                {
-                    throw new Exception("Ocurrió un error al intentar crear el proyecto.");
-                }
-                //Crea su FSI y FSR
-                await _baseDeDatosProceso.CrearFSI(IdProyecto, nombreBD);
-                await _baseDeDatosProceso.CrearFSR(IdProyecto, nombreBD); 
+                //var IdProyecto = await _baseDeDatosProceso.CrearProyecto(clienteCreacion, nombreBD);
+                //if (IdProyecto <= 0)
+                //{
+                //    throw new Exception("Ocurrió un error al intentar crear el proyecto.");
+                //}
+                ////Crea su FSI y FSR
+                //await _baseDeDatosProceso.CrearFSI(IdProyecto, nombreBD);
+                //await _baseDeDatosProceso.CrearFSR(IdProyecto, nombreBD); 
                 List<RolCreacionDTO> roles = new List<RolCreacionDTO>();
                 //Crea los roles
                 foreach (var rol in clienteCreacion.roles)
